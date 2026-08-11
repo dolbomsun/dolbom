@@ -1,4 +1,4 @@
-# HomeDenti · 방문치과 통합관리 플랫폼
+# 돌봄 (dolbom) · 방문치과 통합관리 플랫폼
 
 트리즈컴퍼니 × 태양치과(정상욱 원장) 방문진료 운영 시스템.
 치과 PC·원장님 휴대폰·방문 현장 어디서든 **같은 데이터**를 보고 입력합니다.
@@ -16,18 +16,18 @@
 ### 1단계 · GitHub에 올리기 (10분)
 
 1. https://github.com/new 에서 저장소를 만듭니다.
-   - 이름: `homedenti` (자유)
+   - 이름: `dolbom` (자유)
    - **Public** 선택 *(Private이면 GitHub Pages에 유료 플랜 필요)*
    - README 체크는 해제
 2. 이 폴더 전체를 올립니다. 터미널에서:
 
 ```bash
-cd homedenti
+cd dolbom
 git init
 git add .
-git commit -m "HomeDenti v1"
+git commit -m "돌봄 v1"
 git branch -M main
-git remote add origin https://github.com/<본인계정>/homedenti.git
+git remote add origin https://github.com/<본인계정>/dolbom.git
 git push -u origin main
 ```
 
@@ -38,7 +38,7 @@ git push -u origin main
 저장소 → **Settings → Pages**
 
 - Source: **GitHub Actions** 선택 *(웹 업로드로 올리셨다면 "Deploy from a branch" → Branch: `main`, Folder: `/ (root)`)*
-- 1~2분 뒤 주소가 나옵니다: `https://<계정>.github.io/homedenti/`
+- 1~2분 뒤 주소가 나옵니다: `https://<계정>.github.io/dolbom/`
 
 이 주소를 휴대폰에서 열고 **홈 화면에 추가**하면 앱처럼 실행됩니다.
 (iPhone: 공유 → 홈 화면에 추가 / Android: 메뉴 → 홈 화면에 추가)
@@ -48,7 +48,7 @@ git push -u origin main
 ### 3단계 · Supabase 프로젝트 만들기 (10분)
 
 1. https://supabase.com 가입 → **New project**
-   - Name: `homedenti`
+   - Name: `dolbom`
    - Database Password: 안전하게 보관
    - **Region: Northeast Asia (Seoul)** ← 반드시 서울로
 2. 왼쪽 메뉴 **SQL Editor** → **New query**
@@ -118,7 +118,7 @@ update public.fee_master set points = 1300, amount = 131430 where code = 'V-DENT
 ## 파일 구성
 
 ```
-homedenti/
+dolbom/
 ├── index.html              앱 전체 (화면 + 로직, 단일 파일)
 ├── manifest.webmanifest    홈 화면 설치용
 ├── sw.js                   오프라인 캐시 · 서비스워커

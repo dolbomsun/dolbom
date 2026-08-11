@@ -9,8 +9,8 @@
 <link rel="icon" href="./icons/icon-192.png">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="HomeDenti">
-<title>HomeDenti · 방문치과 통합관리 플랫폼</title>
+<meta name="apple-mobile-web-app-title" content="돌봄">
+<title>돌봄 · 방문치과 통합관리 플랫폼</title>
 <style>
 :root{
   color-scheme: light;
@@ -45,8 +45,8 @@ h1,h2,h3,h4{margin:0;font-weight:650;letter-spacing:-.02em}
   padding:0 16px;background:color-mix(in srgb,var(--surface-1) 88%,transparent);
   backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid var(--border)}
 .logo{display:flex;align-items:center;gap:9px;font-weight:750;letter-spacing:-.03em;font-size:15.5px;white-space:nowrap}
-.logo .mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(140deg,var(--series-1),var(--brand));
-  display:grid;place-items:center;color:#fff;font-size:13px;font-weight:800}
+.logo .mark{width:26px;height:26px;border-radius:9px;background:linear-gradient(140deg,var(--series-1),var(--brand));
+  display:grid;place-items:center;color:#fff;font-size:12px;font-weight:800;letter-spacing:-.04em}
 .logo small{display:block;font-size:10.5px;font-weight:500;color:var(--muted);letter-spacing:0}
 .spacer{flex:1}
 .seg{display:flex;background:var(--plane);border:1px solid var(--border);border-radius:999px;padding:3px;gap:2px}
@@ -430,8 +430,8 @@ const visitsOf = pid => S.visits.filter(v => v.patient_id === pid)
 /* =====================================================================
    DB 계층 — LIVE(Supabase) / DEMO(내 기기) 자동 전환
    ===================================================================== */
-const SNAP = 'homedenti.snapshot';
-const QUEUE = 'homedenti.queue';
+const SNAP = 'dolbom.snapshot';
+const QUEUE = 'dolbom.queue';
 
 async function loadAll(){
   if (!LIVE){
@@ -521,7 +521,7 @@ async function loadMe(){
 let channel = null;
 function subscribeRealtime(){
   if (!LIVE || channel) return;
-  channel = sb.channel('homedenti-all');
+  channel = sb.channel('dolbom-all');
   TABLES.forEach(t => channel.on('postgres_changes', {event:'*', schema:'public', table:t}, async () => {
     await loadAll(); render();
   }));
@@ -596,7 +596,7 @@ function go(p){ PAGE = p; boot(); window.scrollTo({top:0, behavior:'smooth'}); }
 function toggleTheme(){
   const d = document.documentElement.getAttribute('data-theme') === 'dark';
   document.documentElement.setAttribute('data-theme', d ? 'light' : 'dark');
-  LS.set('homedenti.theme', d ? 'light' : 'dark');
+  LS.set('dolbom.theme', d ? 'light' : 'dark');
   boot();
 }
 function openDrawer(title, html){
@@ -683,8 +683,8 @@ function shell(){
   const dark = document.documentElement.getAttribute('data-theme') === 'dark';
   return `
   <header class="topbar">
-    <div class="logo"><span class="mark">H</span>
-      <span>HomeDenti<small>트리즈컴퍼니 × ${esc(CONFIG.CLINIC_NAME)} 방문진료</small></span></div>
+    <div class="logo"><span class="mark">돌</span>
+      <span>돌봄<small>트리즈컴퍼니 × ${esc(CONFIG.CLINIC_NAME)} 방문진료</small></span></div>
     <div class="spacer"></div>
     <span class="who"><span class="net" id="netchip"></span><span id="netlabel"></span></span>
     <div class="seg" role="group" aria-label="화면 모드">
@@ -710,8 +710,8 @@ function navBadge(id){
 }
 function loginView(){
   return `<div class="auth-wrap"><div class="auth-card">
-    <div class="logo" style="margin-bottom:18px"><span class="mark">H</span>
-      <span>HomeDenti<small>${esc(CONFIG.CLINIC_NAME)} 방문진료 통합관리</small></span></div>
+    <div class="logo" style="margin-bottom:18px"><span class="mark">돌</span>
+      <span>돌봄<small>${esc(CONFIG.CLINIC_NAME)} 방문진료 통합관리</small></span></div>
     <h2 style="font-size:19px">직원 로그인</h2>
     <p class="sm muted" style="margin:5px 0 18px">환자 정보는 로그인한 직원만 열람할 수 있습니다.</p>
     <div class="field"><label>이메일</label><input id="au-email" type="email" autocomplete="username" placeholder="name@clinic.kr"></div>
@@ -1842,7 +1842,7 @@ V['f-guide'] = () => `
    시작
    ===================================================================== */
 (async function init(){
-  const th = LS.get('homedenti.theme');
+  const th = LS.get('dolbom.theme');
   if (th) document.documentElement.setAttribute('data-theme', th);
   if (LIVE){
     sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);

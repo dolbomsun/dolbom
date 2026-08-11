@@ -1,6 +1,6 @@
 {
-  "name": "HomeDenti · 방문치과 통합관리",
-  "short_name": "HomeDenti",
+  "name": "돌봄 · 방문치과 통합관리",
+  "short_name": "돌봄",
   "description": "태양치과 방문진료 환자·일정·장비·수가 통합관리",
   "start_url": "./index.html",
   "scope": "./",
