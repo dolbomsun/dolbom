@@ -90,9 +90,15 @@ update public.profiles set app_role = 'admin', name = '정상욱'
 
 | 권한 | 할 수 있는 일 | 누구에게 |
 |---|---|---|
-| `admin` | 전부 + 삭제 | 원장 |
-| `staff` | 조회 + 등록/수정 | 협력의·위생사·코디네이터 |
+| `pending` | **아무것도 못 봄 (기본값)** | 가입 직후 모든 계정 |
 | `viewer` | 조회만 | 참관·실습생 |
+| `staff` | 조회 + 등록/수정 | 협력의·위생사·코디네이터 |
+| `admin` | 전부 + 삭제 | 원장 |
+
+> 주소가 공개되어 있으므로 **누구나 가입 자체는 가능**합니다. 다만 신규 계정은 `pending`으로 시작해
+> 환자 정보를 한 줄도 볼 수 없습니다. 원장님이 위 SQL로 권한을 올려준 계정만 데이터에 접근합니다.
+> 가입 자체를 막고 싶으면 Supabase → Authentication → Sign In / Providers → Email의
+> **Allow new users to sign up**을 꺼두고, 직원은 Authentication → Users에서 직접 초대하세요.
 
 ---
 
