@@ -1,5 +1,5 @@
 -- =====================================================================
---  HomeDenti · 방문치과 통합관리 플랫폼 — Supabase 스키마
+--  돌봄(dolbom) · 방문치과 통합관리 플랫폼 — Supabase 스키마
 --  실행 방법: Supabase 대시보드 → SQL Editor → 이 파일 전체 붙여넣기 → Run
 --  (한 번만 실행하면 됩니다. 재실행해도 안전하도록 IF NOT EXISTS 처리)
 -- =====================================================================
@@ -12,13 +12,17 @@ create extension if not exists "pgcrypto";
 create table if not exists public.profiles (
   id          uuid primary key references auth.users(id) on delete cascade,
   name        text not null default '이름 미설정',
-  app_role    text not null default 'viewer'
-              check (app_role in ('admin','staff','viewer')),
+  app_role    text not null default 'pending'
+              check (app_role in ('admin','staff','viewer','pending')),
   staff_id    uuid,
   created_at  timestamptz not null default now()
 );
 comment on column public.profiles.app_role is
-  'admin=전체 관리(원장) / staff=입력·수정 가능(협력의·위생사·코디네이터) / viewer=조회만';
+  'pending=가입만 된 상태, 데이터 접근 불가(기본값) / viewer=조회만 / staff=입력·수정 가능 / admin=전체 관리(원장)';
+
+-- ★ 중요: 신규 가입자는 pending(접근 권한 없음)으로 시작합니다.
+--    사이트가 공개 주소이므로, 누가 가입하더라도 원장님이 권한을 올려주기 전에는
+--    환자 정보를 한 줄도 볼 수 없습니다.
 
 -- 회원가입 시 profiles 행 자동 생성
 create or replace function public.handle_new_user()
