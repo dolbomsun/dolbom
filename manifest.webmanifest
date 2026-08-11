@@ -1,0 +1,17 @@
+{
+  "name": "HomeDenti · 방문치과 통합관리",
+  "short_name": "HomeDenti",
+  "description": "태양치과 방문진료 환자·일정·장비·수가 통합관리",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f9f9f7",
+  "theme_color": "#0d366b",
+  "lang": "ko",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

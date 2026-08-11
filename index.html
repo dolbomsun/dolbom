@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d366b">
+<meta name="description" content="태양치과 방문진료 통합관리 — 환자·일정·장비·의료진·제도·수가">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="HomeDenti">
+<title>HomeDenti · 방문치과 통합관리 플랫폼</title>
+<style>
+:root{
+  color-scheme: light;
+  --surface-1:#fcfcfb; --plane:#f9f9f7; --surface-2:#ffffff;
+  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
+  --series-1:#2a78d6; --series-2:#eb6834; --series-3:#1baf7a;
+  --good:#0ca30c; --warn:#fab219; --critical:#d03b3b;
+  --brand:#0d366b; --brand-soft:#cde2fb;
+  --r:14px; --shadow:0 1px 2px rgba(11,11,11,.05), 0 8px 24px -12px rgba(11,11,11,.14);
+  --nav-w:236px; --top-h:58px;
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --surface-1:#1a1a19; --plane:#0d0d0d; --surface-2:#211f1e;
+  --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+  --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
+  --brand:#86b6ef; --brand-soft:#184f95;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--plane);color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  padding-bottom:env(safe-area-inset-bottom)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none}
+h1,h2,h3,h4{margin:0;font-weight:650;letter-spacing:-.02em}
+
+.topbar{position:sticky;top:0;z-index:60;height:var(--top-h);display:flex;align-items:center;gap:12px;
+  padding:0 16px;background:color-mix(in srgb,var(--surface-1) 88%,transparent);
+  backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:9px;font-weight:750;letter-spacing:-.03em;font-size:15.5px;white-space:nowrap}
+.logo .mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(140deg,var(--series-1),var(--brand));
+  display:grid;place-items:center;color:#fff;font-size:13px;font-weight:800}
+.logo small{display:block;font-size:10.5px;font-weight:500;color:var(--muted);letter-spacing:0}
+.spacer{flex:1}
+.seg{display:flex;background:var(--plane);border:1px solid var(--border);border-radius:999px;padding:3px;gap:2px}
+.seg button{padding:5px 13px;border-radius:999px;font-size:12.5px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);box-shadow:0 1px 2px rgba(11,11,11,.08)}
+.icon-btn{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  border:1px solid var(--border);background:var(--surface-2);font-size:14px;flex:0 0 auto}
+.icon-btn:hover{background:var(--plane)}
+.who{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:650;color:var(--ink-2);
+  padding:5px 10px;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);white-space:nowrap}
+.net{width:7px;height:7px;border-radius:50%;background:var(--good);flex:0 0 7px}
+.net.off{background:var(--critical)}
+.net.demo{background:var(--warn)}
+
+.shell{display:flex;min-height:calc(100vh - var(--top-h))}
+.sidenav{width:var(--nav-w);flex:0 0 var(--nav-w);padding:14px 10px;border-right:1px solid var(--border);
+  background:var(--surface-1);position:sticky;top:var(--top-h);height:calc(100vh - var(--top-h));overflow-y:auto}
+.navgroup{font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.06em;padding:12px 12px 6px}
+.navitem{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:10px;
+  font-size:13.5px;font-weight:550;color:var(--ink-2);text-align:left}
+.navitem:hover{background:var(--plane)}
+.navitem[aria-current="page"]{background:var(--brand-soft);color:var(--brand);font-weight:700}
+:root[data-theme="dark"] .navitem[aria-current="page"]{color:#fff}
+.navitem .ic{width:18px;text-align:center;font-size:14px}
+.navitem .badge{margin-left:auto;background:var(--critical);color:#fff;font-size:10px;font-weight:700;
+  border-radius:999px;padding:1px 6px;min-width:18px;text-align:center}
+main{flex:1;min-width:0;padding:22px clamp(14px,3vw,32px) 96px}
+.page-head{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.page-head h1{font-size:clamp(19px,2.4vw,24px)}
+.page-head p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.bottomnav{display:none}
+
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.card h3{font-size:14px;margin-bottom:2px}
+.card .sub{color:var(--muted);font-size:12px;margin-bottom:12px}
+.grid{display:grid;gap:14px}
+.g-kpi{grid-template-columns:repeat(auto-fit,minmax(178px,1fr))}
+.g-2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.g-3{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.kpi{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r);padding:15px 16px;box-shadow:var(--shadow)}
+.kpi .lbl{font-size:12px;color:var(--muted);font-weight:600}
+.kpi .val{font-size:29px;font-weight:730;letter-spacing:-.035em;margin-top:6px;line-height:1.1}
+.kpi .val span{font-size:14px;font-weight:600;color:var(--ink-2);letter-spacing:0}
+.kpi .delta{font-size:11.5px;font-weight:650;margin-top:5px;display:flex;align-items:center;gap:5px;color:var(--ink-2)}
+.dot{width:7px;height:7px;border-radius:50%;flex:0 0 7px;display:inline-block}
+
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:650;padding:2.5px 9px;
+  border-radius:999px;border:1px solid var(--border);background:var(--plane);color:var(--ink-2);white-space:nowrap}
+.tag.good{color:#006300;background:#e8f6e8;border-color:transparent}
+.tag.warn{color:#7a5200;background:#fdf2d8;border-color:transparent}
+.tag.crit{color:#8f1f1f;background:#fbe6e6;border-color:transparent}
+.tag.info{color:#184f95;background:#e3eefc;border-color:transparent}
+:root[data-theme="dark"] .tag.good{color:#7fe07f;background:#123012}
+:root[data-theme="dark"] .tag.warn{color:#f5cf7a;background:#3a2e10}
+:root[data-theme="dark"] .tag.crit{color:#f2a1a1;background:#3a1717}
+:root[data-theme="dark"] .tag.info{color:#a8cbf5;background:#132c4d}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.04em;
+  padding:8px 10px;border-bottom:1px solid var(--grid);white-space:nowrap}
+td{padding:10px;border-bottom:1px solid var(--grid);vertical-align:middle}
+tbody tr:hover{background:var(--plane)}
+tbody tr[data-click]{cursor:pointer}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+.tbl-wrap{overflow-x:auto;margin:0 -16px;padding:0 16px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 15px;border-radius:10px;
+  font-size:13px;font-weight:650;border:1px solid var(--border);background:var(--surface-2)}
+.btn:hover{background:var(--plane)}
+.btn.primary{background:var(--series-1);color:#fff;border-color:transparent}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.danger{color:#8f1f1f}
+.btn.sm{padding:5px 11px;font-size:12px;border-radius:8px}
+.btn[disabled]{opacity:.5;pointer-events:none}
+
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
+.field label{font-size:12px;font-weight:650;color:var(--ink-2)}
+.field input,.field select,.field textarea{padding:9px 11px;border-radius:10px;border:1px solid var(--border);
+  background:var(--surface-2);width:100%}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--series-1);outline-offset:-1px}
+.field .hint{font-size:11.5px;color:var(--muted)}
+.row{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+@media (max-width:520px){.row{grid-template-columns:1fr}}
+.searchbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.searchbar input{flex:1;min-width:180px;padding:9px 13px;border-radius:10px;border:1px solid var(--border);background:var(--surface-1)}
+.searchbar select{padding:9px 11px;border-radius:10px;border:1px solid var(--border);background:var(--surface-1)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:5px 12px;border-radius:999px;border:1px solid var(--border);background:var(--surface-1);
+  font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:var(--brand-soft);color:var(--brand);border-color:transparent}
+:root[data-theme="dark"] .chip[aria-pressed="true"]{color:#fff}
+
+.timeline{position:relative;padding-left:22px}
+.timeline::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--grid)}
+.tl-item{position:relative;padding-bottom:16px}
+.tl-item::before{content:"";position:absolute;left:-20px;top:5px;width:11px;height:11px;border-radius:50%;
+  background:var(--series-1);box-shadow:0 0 0 2px var(--surface-1)}
+.tl-item.muted::before{background:var(--axis)}
+.tl-date{font-size:11.5px;color:var(--muted);font-weight:650;font-variant-numeric:tabular-nums}
+.tl-title{font-weight:650;font-size:13.5px;margin-top:1px}
+.tl-body{font-size:12.5px;color:var(--ink-2);margin-top:3px}
+
+.checklist{display:flex;flex-direction:column;gap:2px}
+.checkitem{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:10px}
+.checkitem:hover{background:var(--plane)}
+.checkitem input{margin-top:3px;width:16px;height:16px;accent-color:var(--series-1);flex:0 0 16px}
+.checkitem .t{display:block;font-size:13px;font-weight:600}
+.checkitem .d{display:block;font-size:11.5px;color:var(--muted);margin-top:1px;line-height:1.5}
+.checkitem.done .t{color:var(--muted);text-decoration:line-through}
+.meter{height:6px;border-radius:999px;background:var(--grid);overflow:hidden}
+.meter i{display:block;height:100%;border-radius:999px;background:var(--series-1)}
+
+.scrim{position:fixed;inset:0;background:rgba(11,11,11,.42);z-index:80;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);z-index:90;background:var(--surface-1);
+  border-left:1px solid var(--border);transform:translateX(100%);transition:transform .26s cubic-bezier(.3,.8,.3,1);
+  display:flex;flex-direction:column}
+.drawer.open{transform:none}
+.drawer-head{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border)}
+.drawer-body{overflow-y:auto;padding:18px;flex:1}
+@media (max-width:640px){.drawer{width:100%;top:auto;height:92vh;border-radius:18px 18px 0 0;border-left:none;
+  border-top:1px solid var(--border);transform:translateY(110%)}.drawer.open{transform:none}}
+
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.cal-h{font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding-bottom:4px}
+.cal-d{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:7px 6px;min-height:96px}
+.cal-d .n{font-size:11.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.cal-d.today{border-color:var(--series-1);box-shadow:inset 0 0 0 1px var(--series-1)}
+.ev{margin-top:4px;padding:4px 6px;border-radius:7px;font-size:10.5px;font-weight:650;line-height:1.3;cursor:pointer;
+  background:var(--brand-soft);color:var(--brand);border-left:2px solid var(--series-1)}
+:root[data-theme="dark"] .ev{color:#dce9fb}
+.ev.care{background:#e0f5ec;color:#0a6b4a;border-left-color:var(--series-3)}
+.ev.eval{background:#fdeae1;color:#8a3a17;border-left-color:var(--series-2)}
+:root[data-theme="dark"] .ev.care{background:#0f2f24;color:#8fe3c4}
+:root[data-theme="dark"] .ev.eval{background:#3a2015;color:#f5b391}
+@media (max-width:760px){.cal{grid-template-columns:1fr;gap:6px}.cal-h{display:none}
+  .cal-d{min-height:0;display:flex;gap:10px;align-items:flex-start}.cal-d .n{flex:0 0 52px;padding-top:2px}.cal-d .evs{flex:1}}
+
+.chart{width:100%;display:block}
+.tt{position:fixed;z-index:200;pointer-events:none;background:var(--ink);color:var(--surface-1);padding:6px 10px;
+  border-radius:8px;font-size:11.5px;font-weight:600;opacity:0;transition:opacity .12s;white-space:nowrap;box-shadow:var(--shadow)}
+.tt.on{opacity:1}
+.notice{display:block;padding:11px 13px;border-radius:11px;background:#fdf2d8;color:#7a5200;
+  font-size:12.5px;font-weight:550;line-height:1.6;word-break:keep-all}
+.notice code{background:rgba(11,11,11,.07);padding:1px 5px;border-radius:5px;font-size:11.5px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+:root[data-theme="dark"] .notice code{background:rgba(255,255,255,.12)}
+:root[data-theme="dark"] .notice{background:#332a12;color:#f0d18e}
+.notice.info{background:#e3eefc;color:#184f95}
+:root[data-theme="dark"] .notice.info{background:#12253f;color:#a8cbf5}
+.notice.ok{background:#e8f6e8;color:#006300}
+:root[data-theme="dark"] .notice.ok{background:#123012;color:#7fe07f}
+.kv{display:grid;grid-template-columns:96px 1fr;gap:7px 12px;font-size:13px}
+.kv dt{color:var(--muted);font-weight:600;font-size:12.5px}
+.kv dd{margin:0;font-weight:550}
+.stack{display:flex;flex-direction:column;gap:14px}
+.between{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.muted{color:var(--muted)}
+.sm{font-size:12px}
+hr.sep{border:none;border-top:1px solid var(--grid);margin:14px 0}
+.empty{text-align:center;color:var(--muted);padding:34px 10px;font-size:13px}
+
+.front-hero{border-radius:20px;padding:clamp(22px,4vw,40px);color:#fff;
+  background:linear-gradient(135deg,#184f95,#2a78d6 55%,#1baf7a);box-shadow:var(--shadow)}
+.front-hero h2{font-size:clamp(21px,3.6vw,30px);line-height:1.3;letter-spacing:-.03em}
+.front-hero p{margin:10px 0 0;font-size:14px;opacity:.92;max-width:52ch}
+.front-hero .btn{background:#fff;color:#184f95;border:none;margin-top:18px;font-weight:700}
+.step .n{flex:0 0 26px;height:26px;border-radius:50%;background:var(--brand-soft);color:var(--brand);
+  display:grid;place-items:center;font-size:12px;font-weight:750}
+:root[data-theme="dark"] .step .n{color:#fff}
+.step{display:flex;gap:12px;align-items:flex-start}
+.track{display:flex;margin:6px 0 0;overflow-x:auto}
+.track-s{flex:1;min-width:82px;text-align:center;position:relative;padding-top:22px;font-size:11.5px;font-weight:600;color:var(--muted)}
+.track-s::before{content:"";position:absolute;top:6px;left:50%;width:100%;height:2px;background:var(--grid)}
+.track-s:last-child::before{display:none}
+.track-s::after{content:"";position:absolute;top:1px;left:calc(50% - 6px);width:12px;height:12px;border-radius:50%;
+  background:var(--grid);border:2px solid var(--surface-1)}
+.track-s.done::after{background:var(--series-1)}
+.track-s.done{color:var(--ink)}
+.track-s.done::before{background:var(--series-1)}
+
+/* 로그인 */
+.auth-wrap{min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--plane)}
+.auth-card{width:min(420px,100%);background:var(--surface-1);border:1px solid var(--border);
+  border-radius:18px;padding:26px;box-shadow:var(--shadow)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,120%);z-index:300;background:var(--ink);
+  color:var(--surface-1);padding:11px 18px;border-radius:999px;font-size:13px;font-weight:650;
+  transition:transform .25s;box-shadow:var(--shadow);max-width:90vw;text-align:center}
+.toast.on{transform:translate(-50%,0)}
+
+@media (max-width:900px){
+  .sidenav{display:none}
+  main{padding-bottom:86px}
+  .bottomnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:70;
+    background:color-mix(in srgb,var(--surface-1) 92%,transparent);backdrop-filter:blur(14px);
+    border-top:1px solid var(--border);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .bottomnav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 2px;
+    font-size:10px;font-weight:650;color:var(--muted);border-radius:10px}
+  .bottomnav button .ic{font-size:17px}
+  .bottomnav button[aria-current="page"]{color:var(--series-1)}
+}
+@media (max-width:620px){
+  .logo small{display:none}
+  .logo{font-size:14px;gap:7px}.logo .mark{width:24px;height:24px}
+  .topbar{padding:0 10px;gap:8px}
+  .seg button{padding:5px 9px;font-size:11.5px}
+  .icon-btn{width:31px;height:31px;flex:0 0 31px}
+  .who{display:none}
+  .g-kpi{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .kpi{padding:12px 13px}.kpi .val{font-size:22px}.kpi .lbl{font-size:11.5px}.kpi .delta{font-size:10.5px}
+}
+@media (max-width:360px){.logo span:last-child{display:none}}
+@media print{.topbar,.sidenav,.bottomnav,.btn{display:none!important}main{padding:0}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head"><strong id="drawer-title" style="flex:1;font-size:15px">상세</strong>
+    <button class="icon-btn" onclick="closeDrawer()" aria-label="닫기">✕</button></div>
+  <div class="drawer-body" id="drawer-body"></div>
+</aside>
+<div class="tt" id="tt"></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+/* =====================================================================
+   ★★★ 설정 — 여기 두 줄만 채우면 실시간 공유 모드로 전환됩니다 ★★★
+   Supabase 대시보드 → Project Settings → API 에서 복사
+   비워 두면 "데모 모드"(내 기기에만 저장)로 동작합니다.
+   ===================================================================== */
+const CONFIG = {
+  SUPABASE_URL:      '',   // 예: https://abcdefgh.supabase.co
+  SUPABASE_ANON_KEY: '',   // 예: eyJhbGciOi...  (anon public key — 공개되어도 안전, RLS로 보호)
+  CLINIC_NAME:       '태양치과'
+};
+/* =================================================================== */
+
+const LIVE = !!(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY);
+let sb = null, session = null, me = { name:'데모 사용자', app_role:'admin' };
+let online = navigator.onLine;
+
+const KRW = n => (n||0).toLocaleString('ko-KR') + '원';
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid = () => 'x' + Math.random().toString(36).slice(2,10);
+const todayISO = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+const age = y => y ? (new Date().getFullYear() - y) : null;  // 만 나이
+
+/* 안전한 로컬 저장 (샌드박스/시크릿 모드에서도 에러 없이 동작) */
+const mem = {};
+const LS = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return mem[k] ?? null; } },
+  set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){ mem[k] = v; } }
+};
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove('on'), 2600);
+}
+
+/* =====================================================================
+   상태 · 데이터 계층
+   ===================================================================== */
+const S = { staff:[], patients:[], visits:[], equipment:[], intakes:[], contents:[], rules:[], fee_master:[] };
+const TABLES = ['staff','patients','visits','equipment','intakes','contents','rules','fee_master'];
+
+const CONV = 101.1;
+const SAFETY = [
+  {k:'s1', t:'출발 전 · 전신질환/복용약 재확인', d:'항응고제·BP제제·인슐린 여부 및 최근 검사 수치'},
+  {k:'s2', t:'출발 전 · 멸균팩 유효기간 및 수량', d:'팩 단위 라벨 확인, 예비 1세트 포함'},
+  {k:'s3', t:'출발 전 · 응급 키트 점검', d:'산소·에피네프린 유효기간, 혈압계·산소포화도계 배터리'},
+  {k:'s4', t:'현장 · 보호자 입회 및 시술 동의 확인', d:'구두 동의 외 서면/전자 동의서 서명 확인'},
+  {k:'s5', t:'현장 · 체위 및 흡인 위험 관리', d:'상체 30° 이상 거상, 러버댐·거즈 스로트팩 사용'},
+  {k:'s6', t:'현장 · 감염관리 (구역 분리)', d:'청결구역/오염구역 구분, 폐기물 별도 회수'},
+  {k:'s7', t:'종료 · 기구 회수 및 수량 대조', d:'반입 목록 대비 반출 목록 1:1 대조'},
+  {k:'s8', t:'종료 · 보호자 사후 관리 안내', d:'주의사항 안내문 전달 및 24시간 연락처 고지'},
+  {k:'s9', t:'종료 · 진료기록 및 청구 코드 입력', d:'당일 입력 원칙, 방문 사진(동의 시)·특이사항 기록'}
+];
+
+/* ---------- 데모 데이터 (Supabase 미설정 시) ---------- */
+function demoSeed(){
+  const st = [
+    {id:'s1',name:'정상욱',clinic:'태양치과',role:'원장',regions:['성동구','광진구'],slots:'화·목 오후',tel:'02-000-0001',unit_fee:180000,active:true},
+    {id:'s2',name:'김하늘',clinic:'태양치과',role:'협력의',regions:['중랑구','동대문구'],slots:'수 종일',tel:'02-000-0002',unit_fee:180000,active:true},
+    {id:'s3',name:'박선영',clinic:'연합 협력의',role:'협력의',regions:['성동구'],slots:'금 오전',tel:'02-000-0003',unit_fee:180000,active:true},
+    {id:'s4',name:'이수민',clinic:'태양치과',role:'치과위생사',regions:['성동구','광진구','중랑구'],slots:'주 4일',tel:'02-000-0011',unit_fee:60000,active:true}
+  ];
+  const pt = [
+    {id:'p1',code:'P001',name:'김O자',birth_year:1938,sex:'여',tel:'010-****-1122',guardian_name:'김O수',guardian_rel:'자녀',guardian_tel:'010-****-9080',region:'성동구',address:'성동구 행당동',place:'재가',ltc_grade:'장기요양 2등급',mobility:'와상 (이동 불가)',source:'전화',status:'진행중',doctor_id:'s1',diseases:['뇌졸중 후유증','고혈압','당뇨'],meds:['와파린','메트포르민'],risks:['출혈위험(와파린)','흡인위험'],ohat:11,consent_care:true,consent_content:false},
+    {id:'p2',code:'P002',name:'박O호',birth_year:1941,sex:'남',tel:'010-****-3344',guardian_name:'박O민',guardian_rel:'자녀',guardian_tel:'010-****-7712',region:'광진구',address:'광진구 자양동',place:'시설',ltc_grade:'장기요양 3등급',mobility:'휠체어 이동',source:'기관의뢰',status:'진행중',doctor_id:'s1',diseases:['치매(중등도)','골다공증'],meds:['도네페질','비스포스포네이트'],risks:['MRONJ 위험(BP제제)','협조도 저하'],ohat:9,consent_care:true,consent_content:true},
+    {id:'p3',code:'P003',name:'이O순',birth_year:1945,sex:'여',tel:'010-****-5566',guardian_name:'이O경',guardian_rel:'배우자',guardian_tel:'010-****-2231',region:'중랑구',address:'중랑구 면목동',place:'재가',ltc_grade:'장기요양 4등급',mobility:'실내 보행 가능',source:'이메일',status:'대상자 확정',doctor_id:'s2',diseases:['파킨슨병'],meds:['레보도파'],risks:['연하곤란'],ohat:7,consent_care:true,consent_content:false},
+    {id:'p4',code:'P004',name:'최O식',birth_year:1936,sex:'남',tel:'010-****-7788',guardian_name:'최O라',guardian_rel:'자녀',guardian_tel:'010-****-4410',region:'성동구',address:'성동구 금호동',place:'재가',ltc_grade:'장기요양 1등급',mobility:'와상 (이동 불가)',source:'전화',status:'상담중',doctor_id:null,diseases:['만성신부전','심부전'],meds:['푸로세미드'],risks:['전신상태 불안정'],ohat:14,consent_care:false,consent_content:false},
+    {id:'p5',code:'P005',name:'정O분',birth_year:1943,sex:'여',tel:'010-****-9900',guardian_name:'정O우',guardian_rel:'자녀',guardian_tel:'010-****-6653',region:'동대문구',address:'동대문구 답십리동',place:'재가',ltc_grade:'인지지원등급',mobility:'보조기 보행',source:'전화',status:'진행중',doctor_id:'s2',diseases:['경도인지장애'],meds:[],risks:[],ohat:5,consent_care:true,consent_content:true},
+    {id:'p6',code:'P006',name:'한O례',birth_year:1939,sex:'여',tel:'010-****-1010',guardian_name:'한O진',guardian_rel:'자녀',guardian_tel:'010-****-3399',region:'광진구',address:'광진구 구의동',place:'시설',ltc_grade:'장기요양 2등급',mobility:'휠체어 이동',source:'기관의뢰',status:'종료',doctor_id:'s3',diseases:['고혈압'],meds:['암로디핀'],risks:[],ohat:4,consent_care:true,consent_content:false}
+  ];
+  const V = (id,p,d,t,ty,stt,doc,rg,ti,fc,oc,acts,note)=>
+    ({id,patient_id:p,visit_date:d,visit_time:t,type:ty,status:stt,doctor_id:doc,region:rg,title:ti,
+      fee_code:fc,oral_care:!!oc,addon_rate:0,act_codes:acts||[],equipment_ids:[],safety_checks:{},note:note||''});
+  const vs = [
+    V('v1','p1','2026-07-09','10:00','초진평가','완료','s1','성동구','초진 구강평가 (OHAT 13점)','V-DENT-1',0,['U0221'],'다수 잔존치근, 의치 부적합.'),
+    V('v2','p1','2026-07-23','14:00','구강관리','완료','s4','성동구','치면세균막 관리 · 보호자 교육','V-ORAL',0,[],'보호자 칫솔질 각도 교육.'),
+    V('v3','p1','2026-08-06','10:00','치료','완료','s1','성동구','#36 잔존치근 발치','V-DENT-2',0,['U0111'],'INR 확인 후 시행. 지혈 양호.'),
+    V('v4','p1','2026-08-11','10:00','치료','예약','s1','성동구','#37 우식 치료 예정','V-DENT-2',0,[],''),
+    V('v5','p2','2026-08-04','14:00','구강관리','완료','s4','광진구','의치 세정 및 조정','V-ORAL',0,['U1051'],'하악 의치 압통부 조정.'),
+    V('v6','p2','2026-08-12','13:00','치료','예약','s1','광진구','하악 의치 조정','V-DENT-2',0,[],''),
+    V('v7','p3','2026-08-12','09:30','초진평가','예약','s2','중랑구','초진 방문 예정','V-DENT-1',0,[],'연하평가 동반 예정.'),
+    V('v8','p4','2026-08-13','11:00','초진평가','미배정',null,'성동구','초진 방문 (담당 미배정)','V-DENT-1',0,[],''),
+    V('v9','p5','2026-08-05','10:30','치료','완료','s2','동대문구','#25 복합레진 충전','V-DENT-2',0,['U4413'],'협조 양호.'),
+    V('v10','p5','2026-08-11','15:30','구강관리','예약','s4','동대문구','정기 구강관리','V-ORAL',0,[],''),
+    V('v11','p1','2026-08-14','14:00','구강관리','예약','s4','성동구','정기 구강관리','V-ORAL',0,[],''),
+    V('v12','p5','2026-08-14','10:30','치료','예약','s2','동대문구','#26 충전','V-DENT-2',0,[],''),
+    V('v13','p2','2026-08-10','14:00','구강관리','완료','s4','광진구','의치 세정','V-ORAL',0,[],''),
+    V('v14','p6','2026-06-30','11:00','치료','완료','s3','광진구','상악 총의치 조정 · 종결','V-DENT-2',0,['U1051'],'6개월 후 리콜 예정.')
+  ];
+  const eq = [
+    {id:'e1',name:'포터블 유닛체어 A',category:'유닛',serial:'PU-2401',status:'출동중',holder_id:'s1',last_check:'2026-07-28',next_check:'2026-08-28',cycles:132,cycle_max:200},
+    {id:'e2',name:'포터블 유닛체어 B',category:'유닛',serial:'PU-2402',status:'가용',holder_id:null,last_check:'2026-08-03',next_check:'2026-09-03',cycles:97,cycle_max:200},
+    {id:'e3',name:'포터블 X-ray',category:'영상',serial:'PX-1180',status:'가용',holder_id:null,last_check:'2026-08-01',next_check:'2026-08-31',cycles:210,cycle_max:300},
+    {id:'e4',name:'이동식 석션',category:'석션',serial:'SC-330',status:'점검중',holder_id:null,last_check:'2026-08-09',next_check:'2026-08-12',cycles:305,cycle_max:400},
+    {id:'e5',name:'무선 핸드피스 세트',category:'핸드피스',serial:'HP-772',status:'출동중',holder_id:'s2',last_check:'2026-08-05',next_check:'2026-09-05',cycles:188,cycle_max:250},
+    {id:'e6',name:'휴대용 멸균 파우치 키트',category:'멸균',serial:'ST-050',status:'가용',holder_id:null,last_check:'2026-08-08',next_check:'2026-08-15',cycles:64,cycle_max:100},
+    {id:'e7',name:'응급 키트(산소·에피네프린)',category:'응급',serial:'EM-009',status:'가용',holder_id:null,last_check:'2026-07-20',next_check:'2026-08-20',cycles:12,cycle_max:50}
+  ];
+  const ik = [
+    {id:'i1',received_at:'2026-08-11T09:12:00+09:00',channel:'전화',from_name:'김O수',from_rel:'자녀',from_tel:'010-****-9080',subject:'모친 와상, 잇몸 붓고 통증',region:'성동구',note:'장기요양 2등급, 와파린 복용. 방문 가능 여부 문의.',status:'신규',ref_code:'A-20260811-01',meds_flags:['항응고제(와파린 등)']},
+    {id:'i2',received_at:'2026-08-10T16:40:00+09:00',channel:'이메일',from_name:'서울OO요양원',from_rel:'시설 담당자',from_tel:'02-000-1234',subject:'입소자 4인 구강검진 요청',region:'광진구',note:'시설 단체 검진 문의. 수가·동의서 절차 안내 필요.',status:'상담중',ref_code:'A-20260810-02',meds_flags:[]},
+    {id:'i3',received_at:'2026-08-10T11:05:00+09:00',channel:'전화',from_name:'이O경',from_rel:'배우자',from_tel:'010-****-2231',subject:'의치가 헐거워 식사 어려움',region:'중랑구',note:'8/12 초진 방문 확정.',status:'대상자 확정',ref_code:'A-20260810-01',meds_flags:[]},
+    {id:'i4',received_at:'2026-08-09T14:22:00+09:00',channel:'기관의뢰',from_name:'성동구 통합돌봄창구',from_rel:'기관',from_tel:'02-000-5678',subject:'통합지원회의 의뢰 건',region:'성동구',note:'돌봄통합지원법 대상자. 방문구강관리 우선 필요 판단.',status:'신규',ref_code:'A-20260809-01',meds_flags:[]},
+    {id:'i5',received_at:'2026-08-08T10:31:00+09:00',channel:'전화',from_name:'최O라',from_rel:'자녀',from_tel:'010-****-4410',subject:'부친 전신상태 문의',region:'성동구',note:'만성신부전·심부전. 주치의 소견 확인 후 재상담.',status:'보류',ref_code:'A-20260808-01',meds_flags:[]}
+  ];
+  const ct = [
+    {id:'c1',title:'와상 어르신 발치, 어디까지 가능할까요',channel:'유튜브',status:'편집중',patient_id:'p1',consent:false,note:'동의 미취득 → 재연/일러스트로 대체 제작'},
+    {id:'c2',title:'요양시설 의치 관리 3분 가이드',channel:'유튜브',status:'게시완료',patient_id:'p2',consent:true,note:'조회수 1.2만 · 문의 전환 6건'},
+    {id:'c3',title:'집에서 하는 어르신 구강체조',channel:'인스타그램',status:'기획',patient_id:'p5',consent:true,note:'릴스 3편 시리즈'},
+    {id:'c4',title:'돌봄통합지원법, 치과는 무엇이 달라지나',channel:'유튜브',status:'게시완료',patient_id:null,consent:true,note:'제도 설명 · 기관 문의 4건'}
+  ];
+  const rl = [
+    {id:'r1',category:'법령',title:'의료·요양 등 지역 돌봄의 통합지원에 관한 법률',effective:'2026-03 시행',status:'적용중',sort:1,
+     body:'시·군·구가 노쇠·장애 등으로 일상생활에 어려움이 있는 주민에게 의료·요양·돌봄을 통합 지원. 치과의사가 가정·사회복지시설을 방문해 진료를 제공하는 근거가 마련되었고, 방문구강관리가 지원 항목에 포함됨.',
+     todo:'관할 시·군·구 통합지원회의 참여기관 등록, 대상자 의뢰 경로 확보'},
+    {id:'r2',category:'수가',title:'방문치과진료 수가 1차 가이드라인',effective:'2026-06 공개',status:'가이드라인',sort:2,
+     body:'방문치과진료료 1(1,231.93점)·2(1,408.72점), 장비 이송 및 관리료(559.86점), 방문구강관리료(797.83점) 체계 제시. 진료료 2 선택 시 행위수가 별도 100% 청구 가능. 치과위생사·치과기공사 동반 시 가산 논의 중.',
+     todo:'확정 고시 전까지 청구 시뮬레이션만 운용, 고시 확정 시 수가 마스터 갱신'},
+    {id:'r3',category:'수가',title:'2026년 치과 환산지수 101.1원 (전년 대비 +2%)',effective:'2026-01 적용',status:'적용중',sort:3,
+     body:'요양급여비용 점수당 단가 101.1원. 급여 임플란트(의원) 135만 1,040원 등 다빈도 항목 조정.',todo:'수가 마스터 단가 반영 완료'},
+    {id:'r4',category:'시범사업',title:'일차의료 방문진료 수가 시범사업(의과·한의)',effective:'2026 상반기 공모',status:'참고',sort:4,
+     body:'의과·한의 방문진료 시범사업이 선행 운영 중. 대상자 정의·산정 횟수 제한·참여기관 요건 등 운영 틀이 치과 방문진료 제도 설계의 준거가 됨.',todo:'치과 시범사업 공모 공고 모니터링'},
+    {id:'r5',category:'안전',title:'방문진료 감염관리 및 응급대응 내부 기준',effective:'내부 규정',status:'적용중',sort:5,
+     body:'가정·시설 방문 시 멸균기구 팩 단위 관리, 흡인 위험 환자 체어 각도 관리, 응급 키트(에피네프린·산소) 상시 동반, 시술 전 보호자 입회 원칙.',todo:'분기 1회 모의훈련 및 체크리스트 개정'},
+    {id:'r6',category:'개인정보',title:'환자 촬영·콘텐츠 활용 동의 관리',effective:'내부 규정',status:'적용중',sort:6,
+     body:'유튜브·인스타그램 콘텐츠 제작 시 별도 서면 동의 필수. 얼굴 노출 여부·음성 사용 여부·게시 채널·철회 방법을 분리 동의로 받고, 철회 시 7일 내 비공개 전환.',todo:'전자동의서 서식 v2 배포'}
+  ];
+  const fm = [
+    {code:'V-DENT-1',name:'방문치과진료료 1',points:1231.93,amount:124548,kind:'방문수가',sort:1,active:true,note:'진찰·검사·교육·처방 포함 포괄수가. 행위수가 별도 청구 불가.'},
+    {code:'V-DENT-2',name:'방문치과진료료 2',points:1408.72,amount:142421,kind:'방문수가',sort:2,active:true,note:'장비 이송·관리료 포함. 건강보험 행위수가 별도 100% 청구 가능.'},
+    {code:'V-EQUIP',name:'장비 이송 및 관리료',points:559.86,amount:56601,kind:'방문수가',sort:3,active:true,note:'방문치과진료료 2에 포함된 항목.'},
+    {code:'V-ORAL',name:'방문구강관리료',points:797.83,amount:80660,kind:'방문수가',sort:4,active:true,note:'구강기능 평가·중재·교육 포괄수가. 진료료 2와 동시 산정 가능.'},
+    {code:'U2233',name:'치석제거(1/3악)',points:null,amount:22400,kind:'행위수가',sort:11,active:true},
+    {code:'U0111',name:'단순 발치(전치)',points:null,amount:31200,kind:'행위수가',sort:12,active:true},
+    {code:'U4413',name:'광중합형 복합레진 충전',points:null,amount:64500,kind:'행위수가',sort:13,active:true},
+    {code:'U2411',name:'치수절단(당일발수근충)',points:null,amount:58900,kind:'행위수가',sort:14,active:true},
+    {code:'U1051',name:'의치 조정·수리',points:null,amount:38200,kind:'행위수가',sort:15,active:true},
+    {code:'U0221',name:'치주낭 측정검사',points:null,amount:9800,kind:'행위수가',sort:16,active:true}
+  ];
+  return {staff:st, patients:pt, visits:vs, equipment:eq, intakes:ik, contents:ct, rules:rl, fee_master:fm};
+}
+
+/* ---------- 조회 헬퍼 ---------- */
+const byId   = (t,id) => S[t].find(x => x.id === id) || null;
+const staffN = id => (byId('staff',id)?.name) || '미배정';
+const patN   = id => (byId('patients',id)?.name) || '-';
+const feeOf  = code => S.fee_master.find(f => f.code === code) || null;
+const feeN   = code => feeOf(code)?.name || code || '-';
+const visitsOf = pid => S.visits.filter(v => v.patient_id === pid)
+  .sort((a,b) => (b.visit_date+ (b.visit_time||'')).localeCompare(a.visit_date + (a.visit_time||'')));
+
+
+/* =====================================================================
+   DB 계층 — LIVE(Supabase) / DEMO(내 기기) 자동 전환
+   ===================================================================== */
+const SNAP = 'homedenti.snapshot';
+const QUEUE = 'homedenti.queue';
+
+async function loadAll(){
+  if (!LIVE){
+    const cached = LS.get(SNAP);
+    Object.assign(S, cached && cached.patients ? cached : demoSeed());
+    return;
+  }
+  try {
+    const res = await Promise.all(TABLES.map(t => sb.from(t).select('*')));
+    res.forEach((r,i) => { if (!r.error) S[TABLES[i]] = r.data || []; });
+    S.rules.sort((a,b)=>(a.sort||0)-(b.sort||0));
+    S.fee_master.sort((a,b)=>(a.sort||0)-(b.sort||0));
+    LS.set(SNAP, S);
+    setNet('on');
+  } catch (e) {
+    const cached = LS.get(SNAP);
+    if (cached && cached.patients) { Object.assign(S, cached); toast('오프라인 — 마지막 저장분을 표시합니다'); }
+    setNet('off');
+  }
+}
+
+/* 저장: 온라인이면 즉시 반영, 오프라인이면 대기열에 넣고 화면은 먼저 갱신 */
+async function save(table, row){
+  const isNew = !row.id;
+  if (isNew) row.id = uid();
+  const local = S[table].findIndex(x => x.id === row.id);
+  if (local >= 0) S[table][local] = { ...S[table][local], ...row }; else S[table].unshift(row);
+
+  if (!LIVE){ LS.set(SNAP, S); render(); return row; }
+
+  if (!online){ queuePush({op:'upsert', table, row}); LS.set(SNAP, S); render(); toast('오프라인 저장 — 연결되면 자동 전송'); return row; }
+  const payload = { ...row };
+  if (isNew && String(payload.id).startsWith('x')) delete payload.id;
+  const { data, error } = await sb.from(table).upsert(payload).select().single();
+  if (error){ toast('저장 실패: ' + error.message); return null; }
+  const j = S[table].findIndex(x => x.id === row.id);
+  if (j >= 0) S[table][j] = data; else S[table].unshift(data);
+  LS.set(SNAP, S); render(); toast('저장되었습니다');
+  return data;
+}
+
+async function removeRow(table, id){
+  S[table] = S[table].filter(x => x.id !== id);
+  if (!LIVE){ LS.set(SNAP, S); render(); return; }
+  if (!online){ queuePush({op:'delete', table, id}); LS.set(SNAP, S); render(); return; }
+  const { error } = await sb.from(table).delete().eq('id', id);
+  if (error) toast('삭제 실패: ' + error.message); else toast('삭제되었습니다');
+  LS.set(SNAP, S); render();
+}
+
+function queuePush(item){ const q = LS.get(QUEUE) || []; q.push(item); LS.set(QUEUE, q); updateNetChip(); }
+async function flushQueue(){
+  if (!LIVE || !online) return;
+  const q = LS.get(QUEUE) || [];
+  if (!q.length) return;
+  const rest = [];
+  for (const it of q){
+    try {
+      if (it.op === 'upsert'){
+        const p = { ...it.row }; if (String(p.id).startsWith('x')) delete p.id;
+        const { error } = await sb.from(it.table).upsert(p); if (error) throw error;
+      } else { const { error } = await sb.from(it.table).delete().eq('id', it.id); if (error) throw error; }
+    } catch(e){ rest.push(it); }
+  }
+  LS.set(QUEUE, rest);
+  if (rest.length < q.length){ toast(`대기 중이던 ${q.length - rest.length}건을 전송했습니다`); await loadAll(); render(); }
+  updateNetChip();
+}
+
+/* =====================================================================
+   인증 · 실시간
+   ===================================================================== */
+async function initAuth(){
+  const { data } = await sb.auth.getSession();
+  session = data.session;
+  if (session) await loadMe();
+  sb.auth.onAuthStateChange(async (_e, s) => {
+    session = s;
+    if (s) { await loadMe(); await loadAll(); subscribeRealtime(); }
+    boot();
+  });
+}
+async function loadMe(){
+  const { data } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+  me = data || { name: session.user.email, app_role: 'viewer' };
+}
+let channel = null;
+function subscribeRealtime(){
+  if (!LIVE || channel) return;
+  channel = sb.channel('homedenti-all');
+  TABLES.forEach(t => channel.on('postgres_changes', {event:'*', schema:'public', table:t}, async () => {
+    await loadAll(); render();
+  }));
+  channel.subscribe();
+}
+async function signIn(email, pw){
+  const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+  if (error) { toast('로그인 실패: ' + error.message); return false; }
+  return true;
+}
+async function signUp(email, pw, name){
+  const { error } = await sb.auth.signUp({ email, password: pw, options:{ data:{ name } } });
+  if (error) { toast('가입 실패: ' + error.message); return false; }
+  toast('가입 완료 — 메일함에서 인증 후 로그인하세요'); return true;
+}
+async function signOut(){ await sb.auth.signOut(); location.reload(); }
+
+const canEdit = () => !LIVE || ['admin','staff'].includes(me.app_role);
+
+/* 연결 상태 표시 */
+function setNet(v){ netState = v; updateNetChip(); }
+let netState = LIVE ? 'on' : 'demo';
+function updateNetChip(){
+  const el = document.getElementById('netchip'); if (!el) return;
+  const q = (LS.get(QUEUE) || []).length;
+  const cls = !LIVE ? 'demo' : (online ? 'on' : 'off');
+  el.className = 'net ' + (cls === 'on' ? '' : cls);
+  const lbl = document.getElementById('netlabel');
+  if (lbl) lbl.textContent = !LIVE ? '데모 모드' : (online ? (q ? `전송대기 ${q}` : '실시간 연결') : '오프라인');
+}
+window.addEventListener('online',  () => { online = true;  updateNetChip(); flushQueue(); });
+window.addEventListener('offline', () => { online = false; updateNetChip(); toast('오프라인 — 입력은 기기에 저장됩니다'); });
+
+/* =====================================================================
+   UI 공통
+   ===================================================================== */
+let MODE = 'admin', PAGE = 'dash';
+const NAV = {
+  admin:[
+    {g:'운영'},
+    {id:'dash', ic:'▤', t:'대시보드'},
+    {id:'intake', ic:'☎', t:'접수 · 상담'},
+    {id:'patients', ic:'♡', t:'환자 관리'},
+    {id:'schedule', ic:'▦', t:'일정 · 방문배정'},
+    {g:'자원'},
+    {id:'equip', ic:'⚙', t:'장비 관리'},
+    {id:'doctors', ic:'✚', t:'참여 의료진'},
+    {g:'제도 · 확장'},
+    {id:'policy', ic:'§', t:'제도 · 수가'},
+    {id:'safety', ic:'!', t:'안전 체크리스트'},
+    {id:'content', ic:'▶', t:'콘텐츠 소재'},
+    {id:'settings', ic:'⇄', t:'설정 · 연동'}
+  ],
+  front:[
+    {g:'보호자 · 환자'},
+    {id:'f-home', ic:'⌂', t:'홈'},
+    {id:'f-apply', ic:'✎', t:'방문 신청'},
+    {id:'f-check', ic:'?', t:'대상자 자가확인'},
+    {id:'f-status', ic:'◷', t:'진행 상황 조회'},
+    {id:'f-guide', ic:'§', t:'제도 안내'}
+  ]
+};
+const MOBILE_NAV = {
+  admin:[{id:'dash',ic:'▤',t:'홈'},{id:'intake',ic:'☎',t:'접수'},{id:'patients',ic:'♡',t:'환자'},
+         {id:'schedule',ic:'▦',t:'일정'},{id:'policy',ic:'§',t:'수가'}],
+  front:[{id:'f-home',ic:'⌂',t:'홈'},{id:'f-apply',ic:'✎',t:'신청'},{id:'f-check',ic:'?',t:'자가확인'},
+         {id:'f-status',ic:'◷',t:'진행'},{id:'f-guide',ic:'§',t:'안내'}]
+};
+
+function setMode(m){ MODE = m; PAGE = m === 'admin' ? 'dash' : 'f-home'; boot(); }
+function go(p){ PAGE = p; boot(); window.scrollTo({top:0, behavior:'smooth'}); }
+function toggleTheme(){
+  const d = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', d ? 'light' : 'dark');
+  LS.set('homedenti.theme', d ? 'light' : 'dark');
+  boot();
+}
+function openDrawer(title, html){
+  document.getElementById('drawer-title').textContent = title;
+  document.getElementById('drawer-body').innerHTML = html;
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer').setAttribute('aria-hidden','false');
+  document.getElementById('scrim').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer').setAttribute('aria-hidden','true');
+  document.getElementById('scrim').classList.remove('open');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+const tt = document.getElementById('tt');
+function ttShow(e,h){ tt.innerHTML=h; tt.classList.add('on'); ttMove(e); }
+function ttMove(e){ tt.style.left=(e.clientX+14)+'px'; tt.style.top=(e.clientY-8)+'px'; }
+function ttHide(){ tt.classList.remove('on'); }
+
+const statusTag = s => {
+  const m = {'진행중':'good','대상자 확정':'info','상담중':'warn','종료':'','보류':'warn','신규':'crit','종결':'',
+             '가용':'good','출동중':'info','점검중':'warn','수리':'crit','폐기':'',
+             '예약':'info','완료':'good','미배정':'crit','취소':'','부재':'warn',
+             '적용중':'good','가이드라인':'warn','참고':'','폐지':'',
+             '게시완료':'good','편집중':'warn','기획':'info','촬영':'info'};
+  return `<span class="tag ${m[s] ?? ''}">${esc(s)}</span>`;
+};
+const ohatTag = n => n == null ? '' :
+  n >= 10 ? `<span class="tag crit">OHAT ${n} · 고위험</span>` :
+  n >= 6  ? `<span class="tag warn">OHAT ${n} · 중등도</span>` :
+            `<span class="tag good">OHAT ${n} · 양호</span>`;
+
+function kpi(lbl, unit, val, delta, tone){
+  const c = {good:'var(--good)', warn:'var(--warn)', crit:'var(--critical)'}[tone] || 'var(--muted)';
+  return `<div class="kpi"><div class="lbl">${lbl}</div><div class="val">${val}<span> ${unit}</span></div>
+    <div class="delta"><span class="dot" style="background:${c}"></span>${delta}</div></div>`;
+}
+function barChart(data, label){
+  const w=520, h=190, pad={l:8,r:8,t:22,b:26};
+  const max = Math.max(1, ...data.map(d=>d.v)) * 1.15;
+  const iw = w-pad.l-pad.r, bw = Math.min(46, iw/data.length - 12);
+  return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(label)}" style="height:auto;max-height:220px">
+    ${[0,.5,1].map(f=>{const y=pad.t+(h-pad.t-pad.b)*(1-f);return `<line x1="${pad.l}" x2="${w-pad.r}" y1="${y}" y2="${y}" stroke="var(--grid)"/>`}).join('')}
+    ${data.map((d,i)=>{const cx=pad.l+iw*(i+.5)/data.length, bh=(h-pad.t-pad.b)*(d.v/max), y=h-pad.b-bh;
+      return `<g onmousemove="ttMove(event)" onmouseenter="ttShow(event,'<b>${esc(d.k)}</b> · ${d.v}건')" onmouseleave="ttHide()">
+        <rect x="${cx-bw/2-6}" y="${pad.t-6}" width="${bw+12}" height="${h-pad.t-pad.b+12}" fill="transparent"/>
+        <rect x="${cx-bw/2}" y="${y}" width="${bw}" height="${Math.max(bh,1)}" rx="4" fill="var(--series-1)"/>
+        <text x="${cx}" y="${y-6}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">${d.v}</text>
+        <text x="${cx}" y="${h-8}" text-anchor="middle" font-size="10.5" fill="var(--muted)">${esc(d.k)}</text></g>`}).join('')}
+    <line x1="${pad.l}" x2="${w-pad.r}" y1="${h-pad.b}" y2="${h-pad.b}" stroke="var(--axis)"/></svg>`;
+}
+function hbarChart(data){
+  const rowH=32, h=Math.max(1,data.length)*rowH+8, w=430, lw=68;
+  const max = Math.max(1, ...data.map(d=>d.v));
+  return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="지역별 환자 분포" style="height:auto">
+    ${data.map((d,i)=>{const y=i*rowH+6, bw=(w-lw-46)*(d.v/max);
+      return `<g onmousemove="ttMove(event)" onmouseenter="ttShow(event,'<b>${esc(d.k)}</b> · ${d.v}명')" onmouseleave="ttHide()">
+        <rect x="0" y="${y-3}" width="${w}" height="${rowH-2}" fill="transparent"/>
+        <text x="0" y="${y+16}" font-size="13" font-weight="600" fill="var(--ink-2)">${esc(d.k)}</text>
+        <rect x="${lw}" y="${y+5}" width="${Math.max(bw,3)}" height="14" rx="4" fill="var(--series-1)"/>
+        <text x="${lw+Math.max(bw,3)+8}" y="${y+16}" font-size="12.5" font-weight="700" fill="var(--ink)">${d.v}명</text></g>`}).join('')}
+  </svg>`;
+}
+const val = id => (document.getElementById(id)?.value || '').trim();
+const chk = id => !!document.getElementById(id)?.checked;
+const picked = sel => [...document.querySelectorAll(sel + ' [aria-pressed="true"]')].map(b => b.dataset.v || b.textContent.trim());
+function pickOne(el){ [...el.parentNode.children].forEach(c => c.setAttribute('aria-pressed','false')); el.setAttribute('aria-pressed','true'); }
+function pickMany(el){ el.setAttribute('aria-pressed', el.getAttribute('aria-pressed') !== 'true'); }
+
+
+/* =====================================================================
+   앱 셸 · 로그인
+   ===================================================================== */
+function boot(){
+  const root = document.getElementById('root');
+  if (LIVE && !session && MODE === 'admin'){ root.innerHTML = loginView(); return; }
+  root.innerHTML = shell();
+  render();
+  updateNetChip();
+}
+function shell(){
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  return `
+  <header class="topbar">
+    <div class="logo"><span class="mark">H</span>
+      <span>HomeDenti<small>트리즈컴퍼니 × ${esc(CONFIG.CLINIC_NAME)} 방문진료</small></span></div>
+    <div class="spacer"></div>
+    <span class="who"><span class="net" id="netchip"></span><span id="netlabel"></span></span>
+    <div class="seg" role="group" aria-label="화면 모드">
+      <button aria-pressed="${MODE==='admin'}" onclick="setMode('admin')">운영 어드민</button>
+      <button aria-pressed="${MODE==='front'}" onclick="setMode('front')">보호자 프론트</button>
+    </div>
+    <button class="icon-btn" onclick="toggleTheme()" aria-label="테마 전환">${dark?'☀':'☾'}</button>
+    ${LIVE && session ? `<button class="icon-btn" onclick="signOut()" aria-label="로그아웃" title="${esc(me.name)} · 로그아웃">⏻</button>` : ''}
+  </header>
+  <div class="shell">
+    <aside class="sidenav">${NAV[MODE].map(n => n.g
+      ? `<div class="navgroup">${n.g}</div>`
+      : `<button class="navitem" ${PAGE===n.id?'aria-current="page"':''} onclick="go('${n.id}')">
+           <span class="ic">${n.ic}</span><span>${n.t}</span>${navBadge(n.id)}</button>`).join('')}</aside>
+    <main id="view"></main>
+  </div>
+  <nav class="bottomnav">${MOBILE_NAV[MODE].map(n =>
+    `<button ${PAGE===n.id?'aria-current="page"':''} onclick="go('${n.id}')"><span class="ic">${n.ic}</span>${n.t}</button>`).join('')}</nav>`;
+}
+function navBadge(id){
+  if (id === 'intake'){ const n = S.intakes.filter(i => i.status === '신규').length; return n ? `<span class="badge">${n}</span>` : ''; }
+  return '';
+}
+function loginView(){
+  return `<div class="auth-wrap"><div class="auth-card">
+    <div class="logo" style="margin-bottom:18px"><span class="mark">H</span>
+      <span>HomeDenti<small>${esc(CONFIG.CLINIC_NAME)} 방문진료 통합관리</small></span></div>
+    <h2 style="font-size:19px">직원 로그인</h2>
+    <p class="sm muted" style="margin:5px 0 18px">환자 정보는 로그인한 직원만 열람할 수 있습니다.</p>
+    <div class="field"><label>이메일</label><input id="au-email" type="email" autocomplete="username" placeholder="name@clinic.kr"></div>
+    <div class="field"><label>비밀번호</label><input id="au-pw" type="password" autocomplete="current-password" placeholder="6자 이상"
+      onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div id="au-name-wrap" style="display:none" class="field"><label>이름</label><input id="au-name" placeholder="예: 정상욱"></div>
+    <button class="btn primary" style="width:100%" id="au-go" onclick="doLogin()">로그인</button>
+    <hr class="sep">
+    <div class="between">
+      <button class="btn sm" onclick="toggleSignup()" id="au-toggle">처음이신가요? 계정 만들기</button>
+      <button class="btn sm" onclick="setMode('front')">보호자 화면 보기</button>
+    </div>
+    <div class="notice info" style="margin-top:16px">계정을 만든 뒤에는 원장님이 Supabase에서 권한을 <strong>admin</strong> 또는 <strong>staff</strong>로 올려 주셔야 데이터가 보입니다. (README 참고)</div>
+  </div></div>`;
+}
+let signupMode = false;
+function toggleSignup(){
+  signupMode = !signupMode;
+  document.getElementById('au-name-wrap').style.display = signupMode ? 'flex' : 'none';
+  document.getElementById('au-go').textContent = signupMode ? '계정 만들기' : '로그인';
+  document.getElementById('au-toggle').textContent = signupMode ? '이미 계정이 있어요 · 로그인' : '처음이신가요? 계정 만들기';
+}
+async function doLogin(){
+  const e = val('au-email'), p = val('au-pw');
+  if (!e || !p) return toast('이메일과 비밀번호를 입력하세요');
+  if (signupMode) { if (await signUp(e, p, val('au-name') || e.split('@')[0])) toggleSignup(); }
+  else await signIn(e, p);
+}
+
+/* =====================================================================
+   페이지
+   ===================================================================== */
+const V = {};
+function render(){
+  const el = document.getElementById('view'); if (!el) return;
+  el.innerHTML = (V[PAGE] || V.dash)();
+  if (PAGE === 'policy') calcFee();
+}
+
+/* ---------- 대시보드 ---------- */
+V.dash = () => {
+  const T = todayISO();
+  const active = S.patients.filter(p => p.status === '진행중').length;
+  const pend = S.intakes.filter(i => i.status === '신규').length;
+  const avail = S.equipment.filter(e => e.status === '가용').length;
+  const wk = S.visits.filter(v => v.visit_date >= T && v.visit_date <= addDays(T,6) && v.status !== '취소');
+  const soon = S.visits.filter(v => (v.visit_date === T || v.visit_date === addDays(T,1)) && v.status !== '취소')
+    .sort((a,b)=>(a.visit_date+a.visit_time).localeCompare(b.visit_date+b.visit_time));
+  const weekly = lastWeeks(5);
+  const regions = Object.entries(S.patients.filter(p=>p.status!=='종료').reduce((a,p)=>{a[p.region||'기타']=(a[p.region||'기타']||0)+1;return a;},{}))
+    .map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v);
+  return `
+  <div class="page-head"><div><h1>운영 대시보드</h1><p>${T} 기준 · ${esc(CONFIG.CLINIC_NAME)} 방문진료팀</p></div>
+    <div class="spacer"></div>${canEdit()?`<button class="btn primary" onclick="formIntake()">＋ 접수 등록</button>`:''}</div>
+  <div class="stack">
+    <div class="grid g-kpi">
+      ${kpi('진행 중 환자','명',active,`전체 등록 ${S.patients.length}명`,'good')}
+      ${kpi('미처리 접수','건',pend, pend?'24시간 내 응대 원칙':'모두 처리됨', pend?'crit':'good')}
+      ${kpi('향후 7일 방문','건',wk.length,`미배정 ${wk.filter(v=>v.status==='미배정').length}건`, wk.some(v=>v.status==='미배정')?'warn':'good')}
+      ${kpi('가용 장비','대',`${avail} / ${S.equipment.length}`, `점검 임박 ${S.equipment.filter(e=>e.next_check&&e.next_check<=addDays(T,5)).length}대`,'warn')}
+    </div>
+    <div class="grid g-2">
+      <div class="card"><h3>주간 방문 건수</h3><div class="sub">최근 5주 · 방문진료 + 방문구강관리 합계</div>
+        ${barChart(weekly,'주간 방문 건수')}</div>
+      <div class="card"><h3>지역별 등록 환자</h3><div class="sub">방문 루트 그룹핑 기준</div>
+        ${regions.length ? hbarChart(regions) : '<div class="empty">등록된 환자가 없습니다</div>'}
+        ${routeHint(regions)}</div>
+    </div>
+    <div class="grid g-2">
+      <div class="card">
+        <div class="between"><div><h3>오늘 · 내일 방문</h3><div class="sub">${T} ~ ${addDays(T,1)}</div></div>
+          <button class="btn sm" onclick="go('schedule')">전체 일정</button></div>
+        ${soon.length ? `<div class="tbl-wrap"><table>
+          <thead><tr><th>일시</th><th>환자</th><th>유형</th><th>담당</th><th>상태</th></tr></thead>
+          <tbody>${soon.map(v=>`<tr data-click onclick="showVisit('${v.id}')">
+            <td class="num" style="text-align:left">${v.visit_date.slice(5)} ${(v.visit_time||'').slice(0,5)}</td>
+            <td><strong>${esc(patN(v.patient_id))}</strong></td><td>${v.type}</td>
+            <td>${esc(staffN(v.doctor_id))}</td><td>${statusTag(v.status)}</td></tr>`).join('')}</tbody>
+        </table></div>` : '<div class="empty">오늘·내일 예정된 방문이 없습니다</div>'}
+      </div>
+      <div class="card"><h3>확인이 필요한 항목</h3><div class="sub">리스크 · 제도 알림</div>
+        <div class="stack" style="gap:9px">${alerts()}</div></div>
+    </div>
+    <div class="card">
+      <div class="between"><div><h3>최근 접수</h3><div class="sub">전화 · 이메일 · 기관의뢰 인바운드</div></div>
+        <button class="btn sm" onclick="go('intake')">접수 관리</button></div>
+      ${S.intakes.length ? `<div class="tbl-wrap"><table>
+        <thead><tr><th>접수일시</th><th>경로</th><th>연락 주체</th><th>내용</th><th>지역</th><th>상태</th></tr></thead>
+        <tbody>${[...S.intakes].sort((a,b)=>(b.received_at||'').localeCompare(a.received_at||'')).slice(0,5).map(i=>`
+          <tr data-click onclick="showIntake('${i.id}')"><td class="num" style="text-align:left">${fmtDT(i.received_at)}</td>
+          <td><span class="tag">${i.channel}</span></td><td>${esc(i.from_name)}</td><td>${esc(i.subject)}</td>
+          <td>${esc(i.region||'-')}</td><td>${statusTag(i.status)}</td></tr>`).join('')}</tbody>
+      </table></div>` : '<div class="empty">접수 내역이 없습니다</div>'}
+    </div>
+  </div>`;
+};
+function addDays(iso, n){ const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+function fmtDT(s){ if(!s) return '-'; return String(s).replace('T',' ').slice(5,16); }
+function lastWeeks(n){
+  const out = []; const T = todayISO();
+  for (let i = n-1; i >= 0; i--){
+    const end = addDays(T, -7*i), start = addDays(end, -6);
+    out.push({ k: `${+start.slice(5,7)}/${+start.slice(8,10)}주`,
+               v: S.visits.filter(v => v.visit_date >= start && v.visit_date <= end && v.status !== '취소').length });
+  }
+  return out;
+}
+function routeHint(regions){
+  if (regions.length < 2) return '';
+  const [a,b] = regions;
+  return `<div class="notice info" style="margin-top:10px">💡 ${a.k} ${a.v}명 · ${b.k} ${b.v}명은 같은 날 1개 루트로 묶으면 이동시간을 크게 줄일 수 있습니다.</div>`;
+}
+function alerts(){
+  const out = [];
+  const T = todayISO();
+  S.patients.forEach(p => {
+    if (!p.risks?.length) return;
+    const up = S.visits.find(v => v.patient_id === p.id && v.status === '예약' && v.visit_date >= T);
+    if (up) out.push(['crit', `${p.name} · ${p.risks[0]}`, `${up.visit_date} ${(up.visit_time||'').slice(0,5)} ${up.type} 예정 — 시술 전 확인 필요`, 'patients']);
+  });
+  S.equipment.filter(e => e.next_check && e.next_check <= addDays(T,5))
+    .forEach(e => out.push(['warn', `장비 점검 기한 임박 · ${e.name}`, `${e.serial} — ${e.next_check}까지 점검 완료 필요`, 'equip']));
+  S.visits.filter(v => v.status === '미배정' && v.visit_date >= T)
+    .forEach(v => out.push(['crit', `담당 미배정 방문`, `${patN(v.patient_id)} · ${v.visit_date} ${v.type}`, 'schedule']));
+  S.contents.filter(c => !c.consent && c.patient_id)
+    .forEach(c => out.push(['warn', '콘텐츠 동의 미취득', `${esc(c.title)} — 서면 동의 없이 게시 불가`, 'content']));
+  if (S.rules.some(r => r.status === '가이드라인'))
+    out.push(['warn','수가 고시 미확정','방문치과 수가는 1차 가이드라인 단계 — 청구는 시뮬레이션만 운용','policy']);
+  if (!out.length) return '<div class="empty">확인이 필요한 항목이 없습니다</div>';
+  return out.slice(0,6).map(([tone,t,d,page]) => {
+    const c = tone === 'crit' ? 'var(--critical)' : 'var(--warn)';
+    return `<button style="display:flex;gap:10px;text-align:left;width:100%;padding:9px 10px;border-radius:10px;align-items:flex-start"
+      onmouseover="this.style.background='var(--plane)'" onmouseout="this.style.background='none'" onclick="go('${page}')">
+      <span class="dot" style="background:${c};margin-top:6px"></span>
+      <span><span style="display:block;font-size:13px;font-weight:650">${t}</span>
+      <span style="display:block;font-size:11.5px;color:var(--muted);margin-top:1px">${d}</span></span></button>`;
+  }).join('');
+}
+
+
+/* ---------- 접수 · 상담 ---------- */
+let intakeFilter = '';
+V.intake = () => {
+  const rows = [...S.intakes].sort((a,b)=>(b.received_at||'').localeCompare(a.received_at||''))
+    .filter(i => !intakeFilter || i.status === intakeFilter);
+  const cnt = s => S.intakes.filter(i => i.status === s).length;
+  return `
+  <div class="page-head"><div><h1>접수 · 상담 관리</h1><p>전화·이메일·기관의뢰 문의를 기록하고 환자로 전환합니다</p></div>
+    <div class="spacer"></div>${canEdit()?`<button class="btn primary" onclick="formIntake()">＋ 접수 등록</button>`:''}</div>
+  <div class="stack">
+    <div class="notice info">📞 전화 응대 필수 확인 5가지 — ① 대상자 성함·생년 ② 보호자 관계·연락처 ③ 거주형태(재가/시설) ④ 장기요양 등급 ⑤ 항응고제·골다공증약 복용 여부</div>
+    <div class="card">
+      <div class="chips" style="margin-bottom:12px">
+        <button class="chip" aria-pressed="${!intakeFilter}" onclick="intakeFilter='';render()">전체 ${S.intakes.length}</button>
+        ${['신규','상담중','대상자 확정','보류','종결'].map(s=>
+          `<button class="chip" aria-pressed="${intakeFilter===s}" onclick="intakeFilter='${s}';render()">${s} ${cnt(s)}</button>`).join('')}
+      </div>
+      ${rows.length ? `<div class="tbl-wrap"><table>
+        <thead><tr><th>접수번호</th><th>접수일시</th><th>경로</th><th>주체</th><th>문의 내용</th><th>지역</th><th>상태</th></tr></thead>
+        <tbody>${rows.map(i=>`<tr data-click onclick="showIntake('${i.id}')">
+          <td class="num" style="text-align:left">${esc(i.ref_code||'-')}</td>
+          <td class="num" style="text-align:left">${fmtDT(i.received_at)}</td>
+          <td><span class="tag">${i.channel}</span></td><td>${esc(i.from_name)}${i.from_rel?` <span class="muted sm">(${esc(i.from_rel)})</span>`:''}</td>
+          <td>${esc(i.subject)}</td><td>${esc(i.region||'-')}</td><td>${statusTag(i.status)}</td></tr>`).join('')}</tbody>
+      </table></div>` : '<div class="empty">해당 상태의 접수가 없습니다</div>'}
+    </div>
+  </div>`;
+};
+function showIntake(id){
+  const i = byId('intakes', id); if (!i) return;
+  openDrawer('접수 상세 · ' + (i.ref_code || ''), `
+  <div class="stack">
+    <div>${statusTag(i.status)} <span class="tag">${i.channel}</span></div>
+    <h3 style="font-size:17px">${esc(i.subject)}</h3>
+    <dl class="kv">
+      <dt>접수일시</dt><dd>${fmtDT(i.received_at)}</dd>
+      <dt>연락 주체</dt><dd>${esc(i.from_name)} ${i.from_rel?`(${esc(i.from_rel)})`:''} · ${esc(i.from_tel||'-')}</dd>
+      <dt>지역</dt><dd>${esc(i.region||'-')}</dd>
+      <dt>복용약 신고</dt><dd>${(i.meds_flags||[]).length?(i.meds_flags||[]).map(m=>`<span class="tag warn">${esc(m)}</span>`).join(' '):'<span class="muted">없음</span>'}</dd>
+      <dt>상담 메모</dt><dd>${esc(i.note||'-')}</dd>
+    </dl>
+    ${canEdit()?`
+    <hr class="sep">
+    <div class="field"><label>상태 변경</label>
+      <select onchange="save('intakes',{id:'${i.id}',status:this.value})">
+        ${['신규','상담중','대상자 확정','보류','종결'].map(s=>`<option ${i.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
+    <div class="field"><label>상담 메모</label><textarea id="ik-note" rows="3">${esc(i.note||'')}</textarea>
+      <button class="btn sm" style="align-self:flex-start;margin-top:6px" onclick="save('intakes',{id:'${i.id}',note:val('ik-note')})">메모 저장</button></div>
+    <hr class="sep">
+    ${i.patient_id ? `<div class="notice ok">이미 환자로 전환되었습니다 · ${esc(patN(i.patient_id))}</div>
+      <button class="btn" onclick="closeDrawer();showPatient('${i.patient_id}')">환자 카드 열기</button>`
+    : `<button class="btn primary" onclick="convertIntake('${i.id}')">환자로 전환</button>`}` : ''}
+  </div>`);
+}
+function formIntake(){
+  openDrawer('신규 접수 등록', `
+    <div class="notice info" style="margin-bottom:14px">통화 중 그대로 입력할 수 있도록 필수 항목만 배치했습니다. 나머지는 환자 전환 시 보완합니다.</div>
+    <div class="row">
+      <div class="field"><label>접수 경로</label><select id="ik-ch">${['전화','이메일','기관의뢰','홈페이지'].map(c=>`<option>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>지역</label><input id="ik-region" placeholder="예: 성동구"></div></div>
+    <div class="row">
+      <div class="field"><label>연락 주체 ＊</label><input id="ik-from" placeholder="예: 김○수"></div>
+      <div class="field"><label>관계</label><input id="ik-rel" placeholder="예: 자녀 / 시설 담당자"></div></div>
+    <div class="field"><label>연락처 ＊</label><input id="ik-tel" placeholder="010-0000-0000"><div class="hint">보호자 진행상황 조회 시 뒷 4자리를 사용합니다.</div></div>
+    <div class="field"><label>문의 내용 ＊</label><input id="ik-subj" placeholder="예: 모친 와상, 잇몸 붓고 통증"></div>
+    <div class="field"><label>상담 메모</label><textarea id="ik-memo" rows="3" placeholder="장기요양 등급, 거주형태, 방문 가능 요일 등"></textarea></div>
+    <div class="field"><label>복용약 1차 스크리닝</label>
+      <div class="chips" id="ik-meds">${['항응고제(와파린 등)','골다공증약(BP제제)','당뇨약/인슐린','스테로이드','해당없음']
+        .map(t=>`<button class="chip" onclick="pickMany(this)">${t}</button>`).join('')}</div>
+      <div class="hint">발치·관혈적 처치 가능 여부 판단의 1차 근거가 됩니다.</div></div>
+    <div style="display:flex;gap:8px"><button class="btn primary" onclick="saveIntake()">저장</button>
+      <button class="btn" onclick="closeDrawer()">취소</button></div>`);
+}
+async function saveIntake(){
+  const from = val('ik-from'), tel = val('ik-tel'), subj = val('ik-subj');
+  if (!from || !tel || !subj) return toast('연락 주체 · 연락처 · 문의 내용은 필수입니다');
+  const row = { received_at: new Date().toISOString(), channel: val('ik-ch') || '전화',
+    from_name: from, from_rel: val('ik-rel'), from_tel: tel, subject: subj,
+    region: val('ik-region'), note: val('ik-memo'), meds_flags: picked('#ik-meds'), status: '신규' };
+  if (!LIVE) row.ref_code = 'A-' + todayISO().replace(/-/g,'') + '-' + String(S.intakes.length+1).padStart(2,'0');
+  await save('intakes', row); closeDrawer();
+}
+async function convertIntake(id){
+  const i = byId('intakes', id); if (!i) return;
+  const p = await save('patients', { name: i.from_name + ' 관련 대상자', region: i.region, tel: i.from_tel,
+    guardian_name: i.from_name, guardian_rel: i.from_rel, guardian_tel: i.from_tel,
+    source: i.channel, status: '상담중', diseases: [], meds: [], risks: [],
+    consent_care: false, consent_content: false, memo: i.note });
+  if (p){ await save('intakes', { id, status: '대상자 확정', patient_id: p.id }); closeDrawer();
+    toast('환자로 전환했습니다 — 인적사항을 보완하세요'); showPatient(p.id); }
+}
+
+/* ---------- 환자 관리 ---------- */
+let pq = '', pfs = '', pfr = '';
+V.patients = () => {
+  const list = S.patients.filter(p =>
+    (!pq || (p.name + (p.region||'') + (p.guardian_name||'') + (p.code||'')).includes(pq)) &&
+    (!pfs || p.status === pfs) && (!pfr || p.region === pfr));
+  return `
+  <div class="page-head"><div><h1>환자 관리</h1><p>인적사항 · 전신상태 · 치료 히스토리를 한 곳에서 관리합니다</p></div>
+    <div class="spacer"></div>${canEdit()?`<button class="btn primary" onclick="formPatient()">＋ 환자 등록</button>`:''}</div>
+  <div class="searchbar">
+    <input value="${esc(pq)}" placeholder="이름 · 지역 · 보호자 · 환자코드 검색" oninput="pq=this.value;renderList()">
+    <select onchange="pfs=this.value;render()"><option value="">전체 상태</option>
+      ${['상담중','대상자 확정','진행중','보류','종료'].map(s=>`<option ${pfs===s?'selected':''}>${s}</option>`).join('')}</select>
+    <select onchange="pfr=this.value;render()"><option value="">전체 지역</option>
+      ${[...new Set(S.patients.map(p=>p.region).filter(Boolean))].map(r=>`<option ${pfr===r?'selected':''}>${r}</option>`).join('')}</select>
+  </div>
+  <div class="card">${list.length ? `<div class="tbl-wrap"><table>
+    <thead><tr><th>환자</th><th>연령/성별</th><th>지역 · 거주</th><th>장기요양</th><th>구강상태</th><th>담당의</th><th>상태</th></tr></thead>
+    <tbody id="ptbody">${list.map(pRow).join('')}</tbody></table></div>`
+    : '<div class="empty">조건에 맞는 환자가 없습니다</div>'}</div>`;
+};
+const pRow = p => `<tr data-click onclick="showPatient('${p.id}')">
+  <td><strong>${esc(p.name)}</strong><div class="sm muted">${esc(p.code||'')}${p.guardian_name?` · 보호자 ${esc(p.guardian_name)}(${esc(p.guardian_rel||'')})`:''}</div></td>
+  <td class="num" style="text-align:left">${age(p.birth_year)?age(p.birth_year)+'세':'-'} / ${p.sex||'-'}</td>
+  <td>${esc(p.region||'-')}<div class="sm muted">${esc(p.place||'')}${p.mobility?' · '+esc(p.mobility):''}</div></td>
+  <td>${esc(p.ltc_grade||'-')}</td><td>${ohatTag(p.ohat)}</td>
+  <td>${esc(staffN(p.doctor_id))}</td><td>${statusTag(p.status)}</td></tr>`;
+function renderList(){
+  const tb = document.getElementById('ptbody'); if (!tb) return render();
+  const list = S.patients.filter(p =>
+    (!pq || (p.name + (p.region||'') + (p.guardian_name||'') + (p.code||'')).includes(pq)) &&
+    (!pfs || p.status === pfs) && (!pfr || p.region === pfr));
+  tb.innerHTML = list.map(pRow).join('') || `<tr><td colspan="7" class="empty">조건에 맞는 환자가 없습니다</td></tr>`;
+}
+function showPatient(id){
+  const p = byId('patients', id); if (!p) return;
+  const vs = visitsOf(id);
+  openDrawer(p.name + ' · 환자 상세', `
+  <div class="stack">
+    <div><h3 style="font-size:19px">${esc(p.name)}
+      <span class="muted" style="font-size:13px;font-weight:500">${age(p.birth_year)?age(p.birth_year)+'세 ':''}${p.sex||''} · ${esc(p.code||'')}</span></h3>
+      <div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">${statusTag(p.status)}${ohatTag(p.ohat)}
+        ${(p.risks||[]).map(r=>`<span class="tag crit">⚠ ${esc(r)}</span>`).join('')}</div></div>
+    ${canEdit()?`<div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn sm" onclick="formPatient('${p.id}')">정보 수정</button>
+      <button class="btn sm" onclick="formVisit(null,'${p.id}')">방문 등록</button>
+      <button class="btn sm primary" onclick="closeDrawer();go('policy')">청구 시뮬레이션</button></div>`:''}
+
+    <div class="card" style="box-shadow:none"><h4 style="font-size:13px;margin-bottom:10px">인적 · 접근 정보</h4>
+      <dl class="kv">
+        <dt>연락처</dt><dd>${esc(p.tel||'-')}</dd>
+        <dt>보호자</dt><dd>${esc(p.guardian_name||'-')} ${p.guardian_rel?`(${esc(p.guardian_rel)})`:''} · ${esc(p.guardian_tel||'-')}</dd>
+        <dt>방문지</dt><dd>${esc(p.address||'-')} ${p.place?`<span class="tag">${p.place}</span>`:''}</dd>
+        <dt>거동</dt><dd>${esc(p.mobility||'-')}</dd>
+        <dt>장기요양</dt><dd>${esc(p.ltc_grade||'-')}</dd>
+        <dt>유입 경로</dt><dd>${esc(p.source||'-')}</dd>
+        <dt>담당의</dt><dd>${esc(staffN(p.doctor_id))}</dd></dl></div>
+
+    <div class="card" style="box-shadow:none"><h4 style="font-size:13px;margin-bottom:10px">전신 상태</h4>
+      <div class="sm muted" style="margin-bottom:4px">기저질환</div>
+      <div class="chips" style="margin-bottom:10px">${(p.diseases||[]).length?(p.diseases||[]).map(d=>`<span class="tag">${esc(d)}</span>`).join(''):'<span class="muted sm">없음</span>'}</div>
+      <div class="sm muted" style="margin-bottom:4px">복용약</div>
+      <div class="chips">${(p.meds||[]).length?(p.meds||[]).map(d=>`<span class="tag warn">${esc(d)}</span>`).join(''):'<span class="muted sm">없음</span>'}</div>
+      ${(p.risks||[]).length?`<div class="notice" style="margin-top:12px">⚠ ${(p.risks||[]).map(esc).join(' · ')} — 관혈적 처치 전 주치의 소견 확인이 필요합니다.</div>`:''}</div>
+
+    <div class="card" style="box-shadow:none">
+      <div class="between" style="margin-bottom:12px"><h4 style="font-size:13px">치료 히스토리</h4><span class="sm muted">총 ${vs.length}회</span></div>
+      ${vs.length ? `<div class="timeline">${vs.map((v,i)=>`<div class="tl-item ${i>0?'muted':''}">
+        <div class="tl-date">${v.visit_date} · ${v.type} · ${v.status}</div>
+        <div class="tl-title" style="cursor:pointer" onclick="showVisit('${v.id}')">${esc(v.title||'(제목 없음)')}</div>
+        <div class="tl-body">담당 ${esc(staffN(v.doctor_id))} · ${esc(feeN(v.fee_code))}${(v.act_codes||[]).length?' + '+(v.act_codes||[]).map(a=>esc(feeN(a))).join(', '):''}
+        ${v.note?`<br>${esc(v.note)}`:''}</div></div>`).join('')}</div>` : '<div class="empty">아직 방문 이력이 없습니다</div>'}</div>
+
+    <div class="card" style="box-shadow:none"><h4 style="font-size:13px;margin-bottom:10px">동의 관리</h4>
+      <div class="checklist">
+        <label class="checkitem"><input type="checkbox" ${p.consent_care?'checked':''} ${canEdit()?'':'disabled'}
+          onchange="save('patients',{id:'${p.id}',consent_care:this.checked})">
+          <span><span class="t">방문진료 동의서</span><span class="d">진료 범위·응급상황 대응·개인정보 처리 동의</span></span></label>
+        <label class="checkitem"><input type="checkbox" ${p.consent_content?'checked':''} ${canEdit()?'':'disabled'}
+          onchange="save('patients',{id:'${p.id}',consent_content:this.checked})">
+          <span><span class="t">촬영 · 콘텐츠 활용 동의서</span><span class="d">얼굴 노출 / 음성 / 채널별 분리 동의 · 철회 시 7일 내 비공개</span></span></label>
+      </div></div>
+  </div>`);
+}
+function formPatient(id){
+  const p = id ? byId('patients', id) : {};
+  const arr = a => (a||[]).join(', ');
+  openDrawer(id ? '환자 정보 수정' : '환자 등록', `
+    <div class="row"><div class="field"><label>성함 ＊</label><input id="pf-name" value="${esc(p.name||'')}"></div>
+      <div class="field"><label>생년(4자리)</label><input id="pf-birth" inputmode="numeric" value="${p.birth_year||''}" placeholder="1938"></div></div>
+    <div class="row"><div class="field"><label>성별</label><select id="pf-sex"><option value="">선택</option>
+        <option ${p.sex==='여'?'selected':''}>여</option><option ${p.sex==='남'?'selected':''}>남</option></select></div>
+      <div class="field"><label>본인 연락처</label><input id="pf-tel" value="${esc(p.tel||'')}"></div></div>
+    <div class="row"><div class="field"><label>보호자 성함</label><input id="pf-gn" value="${esc(p.guardian_name||'')}"></div>
+      <div class="field"><label>관계</label><input id="pf-gr" value="${esc(p.guardian_rel||'')}" placeholder="자녀 / 배우자"></div></div>
+    <div class="field"><label>보호자 연락처</label><input id="pf-gt" value="${esc(p.guardian_tel||'')}"></div>
+    <div class="row"><div class="field"><label>지역</label><input id="pf-region" value="${esc(p.region||'')}" placeholder="성동구"></div>
+      <div class="field"><label>거주 형태</label><select id="pf-place">${['재가','시설','요양병원'].map(x=>`<option ${p.place===x?'selected':''}>${x}</option>`).join('')}</select></div></div>
+    <div class="field"><label>방문 주소</label><input id="pf-addr" value="${esc(p.address||'')}" placeholder="도로명주소 · 엘리베이터/주차 메모 포함">
+      <div class="hint">실서비스에서는 행정안전부 도로명주소 API로 정규화합니다.</div></div>
+    <div class="row"><div class="field"><label>장기요양 등급</label><select id="pf-ltc">
+        ${['','장기요양 1등급','장기요양 2등급','장기요양 3등급','장기요양 4등급','장기요양 5등급','인지지원등급','해당없음','모름']
+          .map(x=>`<option ${(p.ltc_grade||'')===x?'selected':''}>${x||'선택'}</option>`).join('')}</select></div>
+      <div class="field"><label>거동 상태</label><select id="pf-mob">
+        ${['','와상 (이동 불가)','휠체어 이동','보조기 보행','실내 보행 가능'].map(x=>`<option ${(p.mobility||'')===x?'selected':''}>${x||'선택'}</option>`).join('')}</select></div></div>
+    <div class="row"><div class="field"><label>담당 치과의사</label><select id="pf-doc"><option value="">미배정</option>
+        ${S.staff.filter(s=>['원장','협력의'].includes(s.role)).map(s=>`<option value="${s.id}" ${p.doctor_id===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+      <div class="field"><label>진행 상태</label><select id="pf-status">
+        ${['상담중','대상자 확정','진행중','보류','종료'].map(x=>`<option ${(p.status||'상담중')===x?'selected':''}>${x}</option>`).join('')}</select></div></div>
+    <div class="field"><label>기저질환 (쉼표로 구분)</label><input id="pf-dz" value="${esc(arr(p.diseases))}" placeholder="고혈압, 당뇨"></div>
+    <div class="field"><label>복용약 (쉼표로 구분)</label><input id="pf-meds" value="${esc(arr(p.meds))}" placeholder="와파린, 메트포르민"></div>
+    <div class="field"><label>위험 요인 (쉼표로 구분)</label><input id="pf-risk" value="${esc(arr(p.risks))}" placeholder="출혈위험(와파린), 흡인위험">
+      <div class="hint">여기에 입력한 항목은 방문 예정일에 대시보드 경고로 올라옵니다.</div></div>
+    <div class="field"><label>OHAT 점수 (0~16)</label><input id="pf-ohat" inputmode="numeric" value="${p.ohat ?? ''}"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn primary" onclick="savePatient('${id||''}')">저장</button>
+      <button class="btn" onclick="closeDrawer()">취소</button>
+      ${id && me.app_role==='admin' ? `<div class="spacer"></div><button class="btn danger" onclick="if(confirm('이 환자와 모든 방문기록을 삭제할까요?')){removeRow('patients','${id}');closeDrawer()}">삭제</button>`:''}
+    </div>`);
+}
+async function savePatient(id){
+  const name = val('pf-name'); if (!name) return toast('성함은 필수입니다');
+  const split = s => s ? s.split(',').map(x=>x.trim()).filter(Boolean) : [];
+  const row = { name, birth_year: +val('pf-birth') || null, sex: val('pf-sex') || null, tel: val('pf-tel'),
+    guardian_name: val('pf-gn'), guardian_rel: val('pf-gr'), guardian_tel: val('pf-gt'),
+    region: val('pf-region'), place: val('pf-place'), address: val('pf-addr'),
+    ltc_grade: val('pf-ltc') === '선택' ? null : val('pf-ltc'),
+    mobility: val('pf-mob') === '선택' ? null : val('pf-mob'),
+    doctor_id: val('pf-doc') || null, status: val('pf-status'),
+    diseases: split(val('pf-dz')), meds: split(val('pf-meds')), risks: split(val('pf-risk')),
+    ohat: val('pf-ohat') === '' ? null : Math.max(0, Math.min(16, +val('pf-ohat'))) };
+  if (id) row.id = id;
+  else if (!LIVE) row.code = 'P' + String(S.patients.length + 1).padStart(3,'0');
+  const saved = await save('patients', row);
+  closeDrawer(); if (saved) showPatient(saved.id);
+}
+
+
+/* ---------- 일정 · 방문 배정 ---------- */
+let weekStart = null;
+function mondayOf(iso){ const d = new Date(iso+'T00:00:00Z'); const w = (d.getUTCDay()+6)%7; return addDays(iso, -w); }
+V.schedule = () => {
+  const T = todayISO();
+  if (!weekStart) weekStart = mondayOf(T);
+  const days = Array.from({length:7}, (_,i)=>addDays(weekStart,i));
+  const names = ['월','화','수','목','금','토','일'];
+  const week = S.visits.filter(v => v.visit_date >= days[0] && v.visit_date <= days[6]);
+  const est = week.filter(v=>v.status!=='취소').reduce((a,v)=>a+estimateFee(v).total,0);
+  const cls = t => t === '구강관리' ? 'care' : t === '초진평가' ? 'eval' : '';
+  return `
+  <div class="page-head"><div><h1>일정 · 방문 배정</h1><p>${days[0]} ~ ${days[6]} · 주간 보기</p></div>
+    <div class="spacer"></div>
+    <div style="display:flex;gap:6px">
+      <button class="btn sm" onclick="weekStart=addDays(weekStart,-7);render()">‹ 이전주</button>
+      <button class="btn sm" onclick="weekStart=mondayOf(todayISO());render()">이번주</button>
+      <button class="btn sm" onclick="weekStart=addDays(weekStart,7);render()">다음주 ›</button>
+    </div>
+    ${canEdit()?`<button class="btn primary" onclick="formVisit()">＋ 방문 등록</button>`:''}</div>
+  <div class="stack">
+    <div class="grid g-kpi">
+      ${kpi('주간 방문','건',week.length, `미배정 ${week.filter(v=>v.status==='미배정').length}건`, week.some(v=>v.status==='미배정')?'warn':'good')}
+      ${kpi('참여 인력','명',new Set(week.map(v=>v.doctor_id).filter(Boolean)).size,'담당 배정된 인원','good')}
+      ${kpi('예상 청구액','원',`약 ${Math.round(est/10000)}만`,'수가 가이드라인 기준 시뮬레이션','warn')}
+      ${kpi('완료','건',week.filter(v=>v.status==='완료').length,`예약 ${week.filter(v=>v.status==='예약').length}건 대기`,'good')}
+    </div>
+    <div class="card">
+      <div class="cal">
+        ${names.map(n=>`<div class="cal-h">${n}</div>`).join('')}
+        ${days.map((d,i)=>{
+          const evs = S.visits.filter(v=>v.visit_date===d).sort((a,b)=>(a.visit_time||'').localeCompare(b.visit_time||''));
+          return `<div class="cal-d ${d===T?'today':''}">
+            <div class="n">${+d.slice(8)}일 <span style="font-weight:500">(${names[i]})</span></div>
+            <div class="evs">${evs.map(v=>`<div class="ev ${cls(v.type)}" onclick="showVisit('${v.id}')">
+              ${(v.visit_time||'').slice(0,5)} ${esc(patN(v.patient_id))}<br>${v.type} · ${esc(staffN(v.doctor_id))}</div>`).join('')}</div></div>`}).join('')}
+      </div>
+      <div class="chips" style="margin-top:12px">
+        <span class="tag"><span class="dot" style="background:var(--series-1)"></span>방문치료</span>
+        <span class="tag"><span class="dot" style="background:var(--series-3)"></span>방문구강관리</span>
+        <span class="tag"><span class="dot" style="background:var(--series-2)"></span>초진평가</span></div>
+    </div>
+    <div class="card"><h3>지역별 루트 제안</h3><div class="sub">같은 날 동일 권역 방문을 묶어 이동시간을 줄입니다</div>
+      ${routeCards(days)}</div>
+  </div>`;
+};
+function routeCards(days){
+  const rows = days.map(d => {
+    const evs = S.visits.filter(v=>v.visit_date===d && v.status!=='취소');
+    if (!evs.length) return null;
+    const regions = [...new Set(evs.map(v=>v.region).filter(Boolean))];
+    return { d, regions, evs };
+  }).filter(Boolean);
+  if (!rows.length) return '<div class="empty">이번 주 등록된 방문이 없습니다</div>';
+  return `<div class="grid g-3">${rows.map(r=>`<div style="border:1px solid var(--border);border-radius:11px;padding:12px">
+    <div class="sm muted" style="font-weight:700">${r.d.slice(5)}</div>
+    <div style="font-weight:650;margin-top:2px">${r.regions.join(' + ') || '지역 미입력'}</div>
+    <div class="sm" style="margin-top:6px">${r.evs.sort((a,b)=>(a.visit_time||'').localeCompare(b.visit_time||''))
+      .map(v=>`${esc(patN(v.patient_id))} ${(v.visit_time||'').slice(0,5)}`).join(' → ')}</div>
+    <div class="sm muted" style="margin-top:4px">${[...new Set(r.evs.map(v=>staffN(v.doctor_id)))].join('·')} ·
+      ${r.regions.length<=1?'동일 권역 · 이동 최소':'권역 2곳 이상 · 분리 배차 검토'}</div></div>`).join('')}</div>`;
+}
+function showVisit(id){
+  const v = byId('visits', id); if (!v) return;
+  const p = byId('patients', v.patient_id);
+  const f = estimateFee(v);
+  const done = v.safety_checks || {};
+  openDrawer('방문 상세', `
+  <div class="stack">
+    <div>${statusTag(v.status)} <span class="tag">${v.type}</span></div>
+    <h3 style="font-size:17px">${v.visit_date} ${(v.visit_time||'').slice(0,5)} · ${esc(patN(v.patient_id))}</h3>
+    <div style="font-size:14px;font-weight:600">${esc(v.title||'')}</div>
+    <dl class="kv">
+      <dt>담당</dt><dd>${esc(staffN(v.doctor_id))}${v.assistant_id?` · 동반 ${esc(staffN(v.assistant_id))}`:''}</dd>
+      <dt>지역</dt><dd>${esc(v.region||'-')}</dd>
+      <dt>반출 장비</dt><dd>${(v.equipment_ids||[]).map(e=>esc(byId('equipment',e)?.name||'')).join(', ')||'-'}</dd>
+      <dt>적용 수가</dt><dd>${esc(feeN(v.fee_code))}${(v.oral_care && v.fee_code!=='V-ORAL')?' + 방문구강관리료':''}</dd>
+      <dt>예상 청구</dt><dd><strong>${KRW(f.total)}</strong> <span class="muted sm">(본인부담 30% ${KRW(Math.round(f.total*0.3))})</span></dd>
+      ${p?.risks?.length?`<dt>위험 요인</dt><dd>${p.risks.map(r=>`<span class="tag crit">⚠ ${esc(r)}</span>`).join(' ')}</dd>`:''}
+      <dt>메모</dt><dd>${esc(v.note||'-')}</dd></dl>
+    ${canEdit()?`
+    <hr class="sep">
+    <div class="field"><label>상태</label><select onchange="save('visits',{id:'${v.id}',status:this.value})">
+      ${['미배정','예약','완료','취소','부재'].map(s=>`<option ${v.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
+    <h4 style="font-size:13px">방문 안전 체크 (${Object.values(done).filter(Boolean).length}/${SAFETY.length})</h4>
+    <div class="checklist">${SAFETY.map(c=>`<label class="checkitem ${done[c.k]?'done':''}">
+      <input type="checkbox" ${done[c.k]?'checked':''} onchange="toggleSafety('${v.id}','${c.k}',this.checked)">
+      <span><span class="t">${c.t}</span><span class="d">${c.d}</span></span></label>`).join('')}</div>
+    <div class="field" style="margin-top:12px"><label>진료 메모</label><textarea id="vs-note" rows="3">${esc(v.note||'')}</textarea>
+      <button class="btn sm" style="align-self:flex-start;margin-top:6px" onclick="save('visits',{id:'${v.id}',note:val('vs-note')})">메모 저장</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick="formVisit('${v.id}')">일정 수정</button>
+      <button class="btn primary" onclick="toast('보호자 알림톡을 발송했습니다 (데모)')">보호자 알림 발송</button></div>`:''}
+  </div>`);
+}
+async function toggleSafety(vid, key, on){
+  const v = byId('visits', vid); const sc = { ...(v.safety_checks||{}) }; sc[key] = on;
+  await save('visits', { id: vid, safety_checks: sc });
+}
+function formVisit(id, presetPatient){
+  const v = id ? byId('visits', id) : { visit_date: todayISO(), visit_time:'10:00', type:'치료', status:'예약',
+    fee_code:'V-DENT-2', patient_id: presetPatient || (S.patients[0]?.id) };
+  openDrawer(id ? '방문 일정 수정' : '방문 일정 등록', `
+    <div class="field"><label>환자 ＊</label><select id="vf-p">
+      ${S.patients.map(p=>`<option value="${p.id}" ${v.patient_id===p.id?'selected':''}>${esc(p.name)} (${esc(p.region||'-')})</option>`).join('')}</select></div>
+    <div class="row"><div class="field"><label>방문일 ＊</label><input id="vf-d" type="date" value="${v.visit_date||todayISO()}"></div>
+      <div class="field"><label>시간</label><input id="vf-t" type="time" value="${(v.visit_time||'10:00').slice(0,5)}"></div></div>
+    <div class="row"><div class="field"><label>유형</label><select id="vf-type">
+        ${['초진평가','치료','구강관리','리콜'].map(x=>`<option ${v.type===x?'selected':''}>${x}</option>`).join('')}</select></div>
+      <div class="field"><label>상태</label><select id="vf-st">
+        ${['미배정','예약','완료','취소','부재'].map(x=>`<option ${v.status===x?'selected':''}>${x}</option>`).join('')}</select></div></div>
+    <div class="field"><label>진료 내용</label><input id="vf-title" value="${esc(v.title||'')}" placeholder="예: #36 잔존치근 발치"></div>
+    <div class="row"><div class="field"><label>담당 치과의사</label><select id="vf-doc"><option value="">미배정</option>
+        ${S.staff.filter(s=>['원장','협력의'].includes(s.role)).map(s=>`<option value="${s.id}" ${v.doctor_id===s.id?'selected':''}>${esc(s.name)} (${s.regions.join('·')})</option>`).join('')}</select></div>
+      <div class="field"><label>동반 인력</label><select id="vf-asst"><option value="">미동반</option>
+        ${S.staff.filter(s=>['치과위생사','치과기공사'].includes(s.role)).map(s=>`<option value="${s.id}" ${v.assistant_id===s.id?'selected':''}>${esc(s.name)} (${s.role})</option>`).join('')}</select>
+        <div class="hint">동반 시 수가 가산 논의 항목입니다.</div></div></div>
+    <div class="row"><div class="field"><label>기본 방문 수가</label><select id="vf-fee">
+        ${S.fee_master.filter(f=>['V-DENT-1','V-DENT-2','V-ORAL'].includes(f.code)).map(f=>`<option value="${f.code}" ${v.fee_code===f.code?'selected':''}>${esc(f.name)}</option>`).join('')}</select></div>
+      <div class="field"><label>방문구강관리료</label><select id="vf-oral">
+        <option value="0" ${!v.oral_care?'selected':''}>미산정</option><option value="1" ${v.oral_care?'selected':''}>동시 산정</option></select></div></div>
+    <div class="field"><label>반출 장비</label><div class="chips" id="vf-eq">
+      ${S.equipment.filter(e=>e.status!=='폐기').map(e=>`<button class="chip" data-v="${e.id}"
+        aria-pressed="${(v.equipment_ids||[]).includes(e.id)}" onclick="pickMany(this)">${esc(e.name)}</button>`).join('')}</div></div>
+    <div class="field"><label>메모</label><textarea id="vf-note" rows="3" placeholder="주차·엘리베이터·보호자 입회 여부 등">${esc(v.note||'')}</textarea></div>
+    <div style="display:flex;gap:8px"><button class="btn primary" onclick="saveVisit('${id||''}')">저장</button>
+      <button class="btn" onclick="closeDrawer()">취소</button>
+      ${id && me.app_role==='admin'?`<div class="spacer"></div><button class="btn danger" onclick="if(confirm('이 방문 기록을 삭제할까요?')){removeRow('visits','${id}');closeDrawer()}">삭제</button>`:''}</div>`);
+}
+async function saveVisit(id){
+  const pid = val('vf-p'); if (!pid) return toast('환자를 선택하세요');
+  const p = byId('patients', pid);
+  const row = { patient_id: pid, visit_date: val('vf-d'), visit_time: val('vf-t') || null,
+    type: val('vf-type'), status: val('vf-st'), title: val('vf-title'),
+    doctor_id: val('vf-doc') || null, assistant_id: val('vf-asst') || null,
+    region: p?.region || null, fee_code: val('vf-fee'), oral_care: val('vf-oral') === '1',
+    equipment_ids: picked('#vf-eq'), note: val('vf-note') };
+  if (id) row.id = id; else { row.safety_checks = {}; row.act_codes = []; row.addon_rate = 0; }
+  await save('visits', row); closeDrawer();
+}
+function estimateFee(v){
+  const base = feeOf(v.fee_code)?.amount || 0;
+  // 기본 수가가 이미 방문구강관리료면 중복 산정하지 않습니다
+  const oral = (v.oral_care && v.fee_code !== 'V-ORAL') ? (feeOf('V-ORAL')?.amount || 0) : 0;
+  const acts = (v.act_codes||[]).reduce((a,c)=>a+(feeOf(c)?.amount||0),0);
+  const addon = Math.round(base * (v.addon_rate||0));
+  return { base, oral, acts, addon, total: base + oral + acts + addon };
+}
+
+/* ---------- 장비 ---------- */
+V.equip = () => {
+  const T = todayISO();
+  return `
+  <div class="page-head"><div><h1>보유 장비 관리</h1><p>포터블 장비의 대여·점검·멸균 주기를 추적합니다</p></div>
+    <div class="spacer"></div>${canEdit()?`<button class="btn primary" onclick="formEquip()">＋ 장비 등록</button>`:''}</div>
+  <div class="stack">
+    <div class="grid g-kpi">
+      ${kpi('총 보유','대',S.equipment.length,`분류 ${new Set(S.equipment.map(e=>e.category)).size}종`,'good')}
+      ${kpi('가용','대',S.equipment.filter(e=>e.status==='가용').length,'즉시 반출 가능','good')}
+      ${kpi('출동중','대',S.equipment.filter(e=>e.status==='출동중').length,'현장 사용 중','')}
+      ${kpi('점검 임박','대',S.equipment.filter(e=>e.next_check&&e.next_check<=addDays(T,5)).length,'5일 이내 기한','warn')}
+    </div>
+    <div class="card">${S.equipment.length?`<div class="tbl-wrap"><table>
+      <thead><tr><th>장비</th><th>분류</th><th>시리얼</th><th>상태</th><th>보유자</th><th class="num">최근 점검</th><th class="num">차기 점검</th><th class="num">사용 횟수</th></tr></thead>
+      <tbody>${S.equipment.map(e=>`<tr data-click onclick="showEquip('${e.id}')">
+        <td><strong>${esc(e.name)}</strong></td><td>${esc(e.category||'-')}</td>
+        <td class="num" style="text-align:left">${esc(e.serial||'-')}</td><td>${statusTag(e.status)}</td>
+        <td>${e.holder_id?esc(staffN(e.holder_id)):'-'}</td><td class="num">${e.last_check||'-'}</td>
+        <td class="num" style="${e.next_check&&e.next_check<=addDays(T,5)?'color:var(--critical);font-weight:700':''}">${e.next_check||'-'}</td>
+        <td class="num">${e.cycles||0}</td></tr>`).join('')}</tbody></table></div>`
+      :'<div class="empty">등록된 장비가 없습니다</div>'}</div>
+    <div class="notice">🛠 사용 횟수가 점검 주기에 가까워진 장비는 상세 화면의 게이지로 확인할 수 있습니다. 유닛체어는 200회, 석션은 400회를 기본 주기로 잡았습니다.</div>
+  </div>`;
+};
+function showEquip(id){
+  const e = byId('equipment', id); if (!e) return;
+  const use = Math.min(100, Math.round((e.cycles||0)/(e.cycle_max||200)*100));
+  const used = S.visits.filter(v=>(v.equipment_ids||[]).includes(id))
+    .sort((a,b)=>b.visit_date.localeCompare(a.visit_date)).slice(0,5);
+  openDrawer(e.name, `
+  <div class="stack">
+    <div>${statusTag(e.status)} <span class="tag">${esc(e.category||'')}</span></div>
+    <dl class="kv"><dt>시리얼</dt><dd>${esc(e.serial||'-')}</dd><dt>보유자</dt><dd>${e.holder_id?esc(staffN(e.holder_id)):'-'}</dd>
+      <dt>최근 점검</dt><dd>${e.last_check||'-'}</dd><dt>차기 점검</dt><dd>${e.next_check||'-'}</dd></dl>
+    <div><div class="between sm" style="margin-bottom:5px"><span class="muted">점검 주기 진행률 (${e.cycle_max||200}회 기준)</span>
+      <strong>${e.cycles||0}회 · ${use}%</strong></div>
+      <div class="meter"><i style="width:${use}%;background:${use>70?'var(--warn)':'var(--series-1)'}"></i></div></div>
+    ${canEdit()?`<hr class="sep">
+    <div class="field"><label>상태 변경</label><select onchange="save('equipment',{id:'${e.id}',status:this.value})">
+      ${['가용','출동중','점검중','수리','폐기'].map(s=>`<option ${e.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
+    <button class="btn primary" onclick="completeCheck('${e.id}')">점검 완료 처리 (오늘 기준 +30일)</button>
+    <button class="btn" onclick="formEquip('${e.id}')">장비 정보 수정</button>`:''}
+    <hr class="sep"><h4 style="font-size:13px">최근 사용 이력</h4>
+    ${used.length?`<div class="timeline">${used.map(v=>`<div class="tl-item">
+      <div class="tl-date">${v.visit_date} ${(v.visit_time||'').slice(0,5)}</div>
+      <div class="tl-title">${esc(patN(v.patient_id))} · ${v.type}</div>
+      <div class="tl-body">${esc(staffN(v.doctor_id))} · ${esc(v.region||'')}</div></div>`).join('')}</div>`
+      :'<div class="empty">사용 이력이 없습니다</div>'}
+  </div>`);
+}
+async function completeCheck(id){
+  await save('equipment', { id, last_check: todayISO(), next_check: addDays(todayISO(),30), status:'가용' });
+  showEquip(id);
+}
+function formEquip(id){
+  const e = id ? byId('equipment', id) : { cycle_max:200, cycles:0, status:'가용' };
+  openDrawer(id?'장비 정보 수정':'장비 등록', `
+    <div class="field"><label>장비명 ＊</label><input id="ef-name" value="${esc(e.name||'')}"></div>
+    <div class="row"><div class="field"><label>분류</label><input id="ef-cat" value="${esc(e.category||'')}" placeholder="유닛 / 영상 / 석션 …"></div>
+      <div class="field"><label>시리얼</label><input id="ef-ser" value="${esc(e.serial||'')}"></div></div>
+    <div class="row"><div class="field"><label>최근 점검일</label><input id="ef-last" type="date" value="${e.last_check||''}"></div>
+      <div class="field"><label>차기 점검일</label><input id="ef-next" type="date" value="${e.next_check||''}"></div></div>
+    <div class="row"><div class="field"><label>누적 사용 횟수</label><input id="ef-cyc" inputmode="numeric" value="${e.cycles||0}"></div>
+      <div class="field"><label>점검 주기(회)</label><input id="ef-max" inputmode="numeric" value="${e.cycle_max||200}"></div></div>
+    <div class="field"><label>보유자</label><select id="ef-holder"><option value="">-</option>
+      ${S.staff.map(s=>`<option value="${s.id}" ${e.holder_id===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+    <div style="display:flex;gap:8px"><button class="btn primary" onclick="saveEquip('${id||''}')">저장</button>
+      <button class="btn" onclick="closeDrawer()">취소</button>
+      ${id&&me.app_role==='admin'?`<div class="spacer"></div><button class="btn danger" onclick="if(confirm('삭제할까요?')){removeRow('equipment','${id}');closeDrawer()}">삭제</button>`:''}</div>`);
+}
+async function saveEquip(id){
+  const name = val('ef-name'); if (!name) return toast('장비명은 필수입니다');
+  const row = { name, category: val('ef-cat'), serial: val('ef-ser') || null,
+    last_check: val('ef-last') || null, next_check: val('ef-next') || null,
+    cycles: +val('ef-cyc')||0, cycle_max: +val('ef-max')||200, holder_id: val('ef-holder')||null };
+  if (id) row.id = id; else row.status = '가용';
+  await save('equipment', row); closeDrawer();
+}
+
+
+/* ---------- 참여 의료진 ---------- */
+V.doctors = () => {
+  const mon = todayISO().slice(0,7);
+  const cnt = sid => S.visits.filter(v => (v.doctor_id===sid||v.assistant_id===sid) && v.visit_date.startsWith(mon) && v.status!=='취소').length;
+  const done = sid => S.visits.filter(v => (v.doctor_id===sid||v.assistant_id===sid) && v.visit_date.startsWith(mon) && v.status==='완료').length;
+  const total = S.staff.reduce((a,s)=>a + cnt(s.id)*(s.unit_fee||0), 0);
+  return `
+  <div class="page-head"><div><h1>참여 의료진 관리</h1><p>담당 지역 · 가용 시간 · 방문 실적과 정산을 관리합니다</p></div>
+    <div class="spacer"></div>${canEdit()?`<button class="btn primary" onclick="formStaff()">＋ 의료진 등록</button>`:''}</div>
+  <div class="stack">
+    ${S.staff.length?`<div class="grid g-3">${S.staff.map(d=>{
+      const c = cnt(d.id), rate = c ? Math.round(done(d.id)/c*100) : 0;
+      return `<div class="card" style="cursor:pointer" onclick="showStaff('${d.id}')">
+        <div class="between"><div><h3 style="font-size:15px">${esc(d.name)}</h3>
+          <div class="sm muted">${esc(d.clinic||'')} · ${d.role}</div></div>
+          <span class="tag ${d.role==='치과위생사'?'info':'good'}">${d.role}</span></div>
+        <hr class="sep">
+        <dl class="kv" style="grid-template-columns:74px 1fr">
+          <dt>담당 지역</dt><dd>${(d.regions||[]).join(' · ')||'-'}</dd>
+          <dt>가용 시간</dt><dd>${esc(d.slots||'-')}</dd>
+          <dt>이번 달</dt><dd><strong>${c}회</strong> 배정</dd></dl>
+        <div style="margin-top:11px"><div class="between sm" style="margin-bottom:4px"><span class="muted">완료율</span><strong>${rate}%</strong></div>
+          <div class="meter"><i style="width:${rate}%"></i></div></div></div>`}).join('')}</div>`
+    :'<div class="card"><div class="empty">등록된 의료진이 없습니다</div></div>'}
+    <div class="card"><h3>월간 정산 요약</h3><div class="sub">${mon} · 방문 건당 정산 (수가 확정 전 내부 단가 기준)</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>의료진</th><th>구분</th><th class="num">배정</th><th class="num">건당 단가</th><th class="num">정산 예정액</th></tr></thead>
+        <tbody>${S.staff.map(d=>`<tr><td><strong>${esc(d.name)}</strong></td><td>${d.role}</td>
+          <td class="num">${cnt(d.id)}</td><td class="num">${KRW(d.unit_fee||0)}</td>
+          <td class="num"><strong>${KRW(cnt(d.id)*(d.unit_fee||0))}</strong></td></tr>`).join('')}
+          <tr><td colspan="4" style="text-align:right;font-weight:700">합계</td><td class="num"><strong>${KRW(total)}</strong></td></tr>
+        </tbody></table></div></div>
+  </div>`;
+};
+function showStaff(id){
+  const d = byId('staff', id); if (!d) return;
+  const mine = S.visits.filter(v=>v.doctor_id===id||v.assistant_id===id)
+    .sort((a,b)=>b.visit_date.localeCompare(a.visit_date)).slice(0,8);
+  openDrawer(d.name + ' · ' + d.role, `
+  <div class="stack">
+    <dl class="kv"><dt>소속</dt><dd>${esc(d.clinic||'-')}</dd><dt>연락처</dt><dd>${esc(d.tel||'-')}</dd>
+      <dt>담당 지역</dt><dd>${(d.regions||[]).join(' · ')||'-'}</dd><dt>가용 시간</dt><dd>${esc(d.slots||'-')}</dd>
+      <dt>건당 단가</dt><dd>${KRW(d.unit_fee||0)}</dd></dl>
+    ${canEdit()?`<button class="btn" onclick="formStaff('${d.id}')">정보 수정</button>`:''}
+    <hr class="sep"><h4 style="font-size:13px">배정된 방문</h4>
+    ${mine.length?`<div class="tbl-wrap"><table><thead><tr><th>일시</th><th>환자</th><th>유형</th><th>상태</th></tr></thead>
+      <tbody>${mine.map(v=>`<tr data-click onclick="showVisit('${v.id}')"><td class="num" style="text-align:left">${v.visit_date.slice(5)} ${(v.visit_time||'').slice(0,5)}</td>
+        <td>${esc(patN(v.patient_id))}</td><td>${v.type}</td><td>${statusTag(v.status)}</td></tr>`).join('')}</tbody></table></div>`
+      :'<div class="empty">배정된 방문이 없습니다</div>'}
+  </div>`);
+}
+function formStaff(id){
+  const d = id ? byId('staff', id) : { role:'협력의', unit_fee:180000, clinic:CONFIG.CLINIC_NAME };
+  openDrawer(id?'의료진 정보 수정':'의료진 등록', `
+    <div class="row"><div class="field"><label>성함 ＊</label><input id="sf-name" value="${esc(d.name||'')}"></div>
+      <div class="field"><label>구분</label><select id="sf-role">${['원장','협력의','치과위생사','치과기공사','코디네이터']
+        .map(x=>`<option ${d.role===x?'selected':''}>${x}</option>`).join('')}</select></div></div>
+    <div class="row"><div class="field"><label>소속</label><input id="sf-clinic" value="${esc(d.clinic||'')}"></div>
+      <div class="field"><label>연락처</label><input id="sf-tel" value="${esc(d.tel||'')}"></div></div>
+    <div class="field"><label>담당 지역 (쉼표로 구분)</label><input id="sf-reg" value="${esc((d.regions||[]).join(', '))}" placeholder="성동구, 광진구"></div>
+    <div class="row"><div class="field"><label>가용 시간</label><input id="sf-slots" value="${esc(d.slots||'')}" placeholder="화·목 오후"></div>
+      <div class="field"><label>건당 정산 단가</label><input id="sf-fee" inputmode="numeric" value="${d.unit_fee||0}"></div></div>
+    <div style="display:flex;gap:8px"><button class="btn primary" onclick="saveStaff('${id||''}')">저장</button>
+      <button class="btn" onclick="closeDrawer()">취소</button>
+      ${id&&me.app_role==='admin'?`<div class="spacer"></div><button class="btn danger" onclick="if(confirm('삭제할까요?')){removeRow('staff','${id}');closeDrawer()}">삭제</button>`:''}</div>`);
+}
+async function saveStaff(id){
+  const name = val('sf-name'); if (!name) return toast('성함은 필수입니다');
+  const row = { name, role: val('sf-role'), clinic: val('sf-clinic'), tel: val('sf-tel'),
+    regions: val('sf-reg') ? val('sf-reg').split(',').map(x=>x.trim()).filter(Boolean) : [],
+    slots: val('sf-slots'), unit_fee: +val('sf-fee')||0, active:true };
+  if (id) row.id = id;
+  await save('staff', row); closeDrawer();
+}
+
+/* ---------- 제도 · 수가 ---------- */
+V.policy = () => {
+  const visitFees = S.fee_master.filter(f=>f.kind==='방문수가');
+  const acts = S.fee_master.filter(f=>f.kind==='행위수가');
+  return `
+  <div class="page-head"><div><h1>제도 · 수가 관리</h1><p>돌봄통합지원법 시행과 방문치과 수가 가이드라인을 운영에 반영합니다</p></div></div>
+  <div class="stack">
+    <div class="notice">⚠ 방문치과진료 수가는 <strong>2026년 6월 공개된 1차 가이드라인</strong> 단계입니다. 확정 고시가 아니므로 아래 계산기는 <strong>내부 시뮬레이션 용도</strong>로만 사용하세요.</div>
+    <div class="card"><h3>수가 마스터</h3><div class="sub">2026년 치과 환산지수 ${CONV}원 기준 · 확정 고시가 나오면 이 표만 갱신하면 전체에 반영됩니다</div>
+      <div class="tbl-wrap"><table><thead><tr><th>코드</th><th>항목</th><th class="num">상대가치점수</th><th class="num">금액</th><th>비고</th></tr></thead>
+        <tbody>${visitFees.map(f=>`<tr><td class="num" style="text-align:left">${f.code}</td><td><strong>${esc(f.name)}</strong></td>
+          <td class="num">${f.points?f.points.toLocaleString()+'점':'-'}</td><td class="num"><strong>${KRW(f.amount)}</strong></td>
+          <td class="sm muted">${esc(f.note||'')}</td></tr>`).join('')}</tbody></table></div></div>
+
+    <div class="grid g-2">
+      <div class="card"><h3>청구 시뮬레이터</h3><div class="sub">방문 1건의 예상 청구액과 본인부담금을 계산합니다</div>
+        <div class="field"><label>기본 방문 수가</label><select id="c-base" onchange="calcFee()">
+          ${visitFees.filter(f=>f.code.startsWith('V-DENT')).map(f=>`<option value="${f.code}" ${f.code==='V-DENT-2'?'selected':''}>${esc(f.name)} — ${esc(f.note||'')}</option>`).join('')}</select></div>
+        <div class="field"><label style="display:flex;align-items:center;gap:7px"><input type="checkbox" id="c-oral" onchange="calcFee()" style="width:auto">방문구강관리료 동시 산정</label>
+          <div class="hint">방문치과진료료 2와 동시 청구 가능 (가이드라인)</div></div>
+        <div class="field"><label>동반 인력 가산</label><select id="c-add" onchange="calcFee()">
+          <option value="0">미동반</option><option value="0.1">치과위생사 동반 (+10% 가정)</option>
+          <option value="0.15">치과위생사 + 치과기공사 (+15% 가정)</option></select>
+          <div class="hint">가산율은 가이드라인상 논의 단계 — 가정값입니다.</div></div>
+        <div class="field"><label>행위수가 (진료료 2 선택 시 별도 산정)</label>
+          <div class="chips" id="c-acts">${acts.map(a=>`<button class="chip" data-amt="${a.amount}" onclick="pickMany(this);calcFee()">${esc(a.name)}</button>`).join('')}</div></div>
+        <div class="field"><label>본인부담 구분</label><select id="c-rate" onchange="calcFee()">
+          <option value="0.3">건강보험 (의원 외래 30%)</option><option value="0.15">차상위 경감 (15%)</option>
+          <option value="0.06">의료급여 2종 (약 6%)</option><option value="0">의료급여 1종 (0%)</option></select></div>
+        <div id="c-out"></div></div>
+
+      <div class="card"><h3>제도 · 규정 카드</h3><div class="sub">시행 일정과 우리 팀의 대응 과제</div>
+        <div class="stack" style="gap:10px">${S.rules.map(r=>`
+          <button style="text-align:left;width:100%;border:1px solid var(--border);border-radius:11px;padding:12px" onclick="showRule('${r.id}')">
+            <div class="between" style="margin-bottom:4px"><span class="tag">${r.category}</span>${statusTag(r.status)}</div>
+            <div style="font-weight:650;font-size:13.5px">${esc(r.title)}</div>
+            <div class="sm muted" style="margin-top:2px">${esc(r.effective||'')}</div></button>`).join('')
+          || '<div class="empty">등록된 제도 카드가 없습니다</div>'}</div></div>
+    </div>
+
+    <div class="card"><h3>청구 전 확인 체크리스트</h3><div class="sub">수가 확정 후 EDI 청구 시 누락을 막기 위한 항목</div>
+      <div class="checklist">${['방문진료 동의서 서명본 스캔 첨부','대상자 요건(거동불편·재가/시설) 증빙 확보',
+        '장기요양 등급 또는 통합지원 의뢰 근거 기록','방문 일시·소요시간·동반 인력 기록','반출 장비 목록 및 이송 기록',
+        '시행 행위 코드 및 부위 기록','본인부담금 수납 및 영수증 발행','산정 횟수 제한(월/일) 초과 여부 확인']
+        .map(t=>`<label class="checkitem"><input type="checkbox" onchange="this.closest('.checkitem').classList.toggle('done',this.checked)">
+        <span><span class="t">${t}</span></span></label>`).join('')}</div></div>
+  </div>`;
+};
+function showRule(id){
+  const r = byId('rules', id); if (!r) return;
+  openDrawer(r.title, `<div class="stack">
+    <div><span class="tag">${r.category}</span> ${statusTag(r.status)} <span class="tag">${esc(r.effective||'')}</span></div>
+    <p style="font-size:13.5px;line-height:1.7;margin:0">${esc(r.body||'')}</p>
+    <hr class="sep"><h4 style="font-size:13px">우리 팀 대응 과제</h4>
+    <div class="notice info">${esc(r.todo||'-')}</div>
+    ${r.source_url?`<a class="btn" href="${esc(r.source_url)}" target="_blank" rel="noopener">원문 보기 ↗</a>`:''}
+  </div>`);
+}
+function calcFee(){
+  const out = document.getElementById('c-out'); if (!out) return;
+  const base = feeOf(document.getElementById('c-base').value); if (!base) return;
+  const isT2 = base.code === 'V-DENT-2';
+  const oral = chk('c-oral') ? (feeOf('V-ORAL')?.amount||0) : 0;
+  const add = parseFloat(document.getElementById('c-add').value) || 0;
+  const rate = parseFloat(document.getElementById('c-rate').value) || 0;
+  const acts = isT2 ? [...document.querySelectorAll('#c-acts .chip[aria-pressed="true"]')].reduce((a,b)=>a + (+b.dataset.amt||0), 0) : 0;
+  const addAmt = Math.round(base.amount * add);
+  const total = base.amount + addAmt + oral + acts;
+  const self = Math.round(total * rate), ins = total - self;
+  out.innerHTML = `<hr class="sep">
+    <div class="tbl-wrap"><table><tbody>
+      <tr><td>${esc(base.name)}</td><td class="num">${KRW(base.amount)}</td></tr>
+      ${addAmt?`<tr><td>동반 인력 가산 (+${Math.round(add*100)}%)</td><td class="num">${KRW(addAmt)}</td></tr>`:''}
+      ${oral?`<tr><td>방문구강관리료</td><td class="num">${KRW(oral)}</td></tr>`:''}
+      ${acts?`<tr><td>행위수가 합계</td><td class="num">${KRW(acts)}</td></tr>`:''}
+      ${!isT2?`<tr><td class="muted sm" colspan="2">방문치과진료료 1은 포괄수가로 행위수가를 별도 산정하지 않습니다.</td></tr>`:''}
+    </tbody></table></div>
+    <div style="background:var(--plane);border-radius:12px;padding:14px;margin-top:12px">
+      <div class="between"><span class="muted sm" style="font-weight:650">총 진료비</span>
+        <strong style="font-size:22px;letter-spacing:-.03em">${KRW(total)}</strong></div>
+      <hr class="sep" style="margin:10px 0">
+      <div class="between sm"><span class="muted">공단 부담</span><strong>${KRW(ins)}</strong></div>
+      <div class="between sm" style="margin-top:4px"><span class="muted">본인 부담 (${Math.round(rate*100)}%)</span>
+        <strong style="color:var(--series-1)">${KRW(self)}</strong></div></div>
+    <div class="sm muted" style="margin-top:8px">※ 1차 가이드라인 기반 추정치입니다. 확정 고시·산정 횟수 제한·대상자 요건에 따라 실제 청구액은 달라질 수 있습니다.</div>`;
+}
+
+
+/* ---------- 안전 체크리스트 ---------- */
+V.safety = () => `
+  <div class="page-head"><div><h1>방문 안전 체크리스트</h1><p>리스크를 최소화하는 것이 방문진료 확산의 전제입니다</p></div>
+    <div class="spacer"></div><button class="btn primary" onclick="window.print()">체크리스트 인쇄</button></div>
+  <div class="stack">
+    <div class="notice info">ℹ 실제 체크는 <strong>일정 → 방문 상세</strong>에서 방문 건별로 기록됩니다. 기록된 내용은 청구 근거로 함께 보관됩니다.</div>
+    <div class="grid g-3">
+      ${[['출발 전','기구·약제·환자정보 사전 확인'],['현장','체위·감염관리·동의 확인'],['종료','기구 회수·기록·사후 안내']]
+        .map(g=>`<div class="kpi"><div class="lbl">${g[0]}</div><div class="val">3<span> 항목</span></div>
+          <div class="delta"><span class="dot" style="background:var(--series-1)"></span>${g[1]}</div></div>`).join('')}
+    </div>
+    <div class="card"><h3>표준 체크리스트 (9항목)</h3><div class="sub">방문 1건마다 기록되며, 미완료 항목이 있으면 청구 단계로 넘어가지 않습니다</div>
+      <div class="checklist">${SAFETY.map(c=>`<label class="checkitem"><input type="checkbox"
+        onchange="this.closest('.checkitem').classList.toggle('done',this.checked)">
+        <span><span class="t">${c.t}</span><span class="d">${c.d}</span></span></label>`).join('')}</div></div>
+    <div class="grid g-2">
+      <div class="card"><h3>고위험 상황 대응 프로토콜</h3><div class="sub">현장에서 바로 펼쳐 보는 요약</div>
+        <div class="stack" style="gap:10px">${[
+          ['흡인(Aspiration)','거즈 스로트팩·러버댐 필수, 상체 30° 이상 거상, 고속 석션 상시 대기'],
+          ['출혈 지연 (항응고제)','최근 INR 확인, 국소 지혈제·봉합 준비, 30분 압박 후 재확인 · 보호자 야간 연락처 고지'],
+          ['MRONJ (BP제제)','관혈적 처치 원칙 보류, 주치의 협진 후 결정, 불가피 시 항생제 예방 투여'],
+          ['협조도 저하 (치매)','짧은 세션 분할, 익숙한 보호자 동석, 강박 금지 · 중단 기준 사전 합의'],
+          ['응급 (실신·저혈당·경련)','시술 즉시 중단 → 기도 확보 → 119 및 주치의 동시 연락 → 응급 키트 사용']]
+          .map(r=>`<div style="border-left:3px solid var(--critical);padding:2px 0 2px 12px">
+            <div style="font-weight:680;font-size:13.5px">${r[0]}</div>
+            <div class="sm muted" style="margin-top:2px;line-height:1.6">${r[1]}</div></div>`).join('')}</div></div>
+      <div class="card"><h3>OHAT 구강건강 평가</h3><div class="sub">Oral Health Assessment Tool · 8개 항목 × 0~2점 (총 16점)</div>
+        <div class="tbl-wrap"><table><thead><tr><th>평가 항목</th><th class="num">0점</th><th class="num">1점</th><th class="num">2점</th></tr></thead>
+          <tbody>${[['입술','정상','건조·균열','궤양·출혈'],['혀','정상','설태·발적','궤양·부종'],
+            ['잇몸·점막','정상','부종·발적','출혈·궤양'],['타액','촉촉','점조','건조'],
+            ['자연치','손상 없음','1~3개 우식/파절','4개 이상'],['의치','손상 없음','파손·부적합','미착용/불가'],
+            ['구강 청결','청결','국소 침착','전반적 침착'],['치통','없음','비언어적 징후','통증 호소']]
+            .map(r=>`<tr><td><strong>${r[0]}</strong></td><td class="sm muted">${r[1]}</td>
+              <td class="sm muted">${r[2]}</td><td class="sm muted">${r[3]}</td></tr>`).join('')}</tbody></table></div>
+        <div class="notice info" style="margin-top:10px">0~5점 양호 · 6~9점 중등도(구강관리 개입) · 10점 이상 고위험(치과의사 진료 우선)</div></div>
+    </div>
+  </div>`;
+
+/* ---------- 콘텐츠 소재 ---------- */
+V.content = () => {
+  const posted = S.contents.filter(c=>c.status==='게시완료').length;
+  return `
+  <div class="page-head"><div><h1>콘텐츠 소재 아카이브</h1><p>진료 현장 → 유튜브·인스타그램으로 이어지는 파이프라인을 동의 관리와 함께 운영합니다</p></div>
+    <div class="spacer"></div>${canEdit()?`<button class="btn primary" onclick="formContent()">＋ 소재 등록</button>`:''}</div>
+  <div class="stack">
+    <div class="notice">⚠ 동의 미취득 소재는 <strong>게시 단계로 이동할 수 없습니다.</strong> 재연·일러스트·제도 설명형으로 대체 제작하세요.</div>
+    ${S.contents.length?`<div class="grid g-2">${S.contents.map(c=>`<div class="card" style="cursor:pointer" onclick="formContent('${c.id}')">
+      <div class="between" style="margin-bottom:8px"><span class="tag ${c.channel==='유튜브'?'crit':'info'}">${c.channel}</span>${statusTag(c.status)}</div>
+      <h3 style="font-size:15px;line-height:1.4">${esc(c.title)}</h3>
+      <div class="sm muted" style="margin-top:6px">연계 환자: ${c.patient_id?esc(patN(c.patient_id)):'-'}</div>
+      <div style="margin-top:9px">${c.consent?'<span class="tag good">✓ 콘텐츠 동의 확보</span>':'<span class="tag crit">✕ 동의 미취득</span>'}</div>
+      ${c.note?`<hr class="sep"><div class="sm">${esc(c.note)}</div>`:''}</div>`).join('')}</div>`
+      :'<div class="card"><div class="empty">등록된 소재가 없습니다</div></div>'}
+    <div class="card"><h3>콘텐츠 → 문의 전환 흐름</h3><div class="sub">마케팅이 접수 채널로 이어지는 경로</div>
+      <div class="track">${['콘텐츠 게시','프로필 링크 유입','상담 신청 폼','전화 상담','대상자 확정','첫 방문']
+        .map((t,i)=>`<div class="track-s ${i<4?'done':''}">${t}</div>`).join('')}</div>
+      <div class="grid g-kpi" style="margin-top:18px">
+        ${kpi('게시 완료','편',posted,'유튜브·인스타 합계','good')}
+        ${kpi('홈페이지 유입 접수','건',S.intakes.filter(i=>i.channel==='홈페이지').length,'프론트 신청 폼 경유','good')}
+        ${kpi('상담 전환','건',S.intakes.filter(i=>['상담중','대상자 확정'].includes(i.status)).length,'접수 → 상담 진행','good')}
+        ${kpi('환자 확정','명',S.patients.filter(p=>p.status!=='상담중').length,'대상자 확정 이상','')}
+      </div></div>
+  </div>`;
+};
+function formContent(id){
+  const c = id ? byId('contents', id) : { channel:'유튜브', status:'기획', consent:false };
+  openDrawer(id?'소재 수정':'소재 등록', `
+    <div class="field"><label>제목 ＊</label><input id="cf-title" value="${esc(c.title||'')}"></div>
+    <div class="row"><div class="field"><label>채널</label><select id="cf-ch">${['유튜브','인스타그램','블로그','기타']
+        .map(x=>`<option ${c.channel===x?'selected':''}>${x}</option>`).join('')}</select></div>
+      <div class="field"><label>상태</label><select id="cf-st">${['기획','촬영','편집중','게시완료','보류']
+        .map(x=>`<option ${c.status===x?'selected':''}>${x}</option>`).join('')}</select></div></div>
+    <div class="field"><label>연계 환자</label><select id="cf-p"><option value="">없음 (제도 설명형 등)</option>
+      ${S.patients.map(p=>`<option value="${p.id}" ${c.patient_id===p.id?'selected':''}>${esc(p.name)}${p.consent_content?' ✓동의':' ✕미동의'}</option>`).join('')}</select>
+      <div class="hint">환자를 연계하면 해당 환자의 콘텐츠 활용 동의 여부가 자동으로 확인됩니다.</div></div>
+    <div class="field"><label style="display:flex;gap:7px;align-items:center"><input type="checkbox" id="cf-consent" ${c.consent?'checked':''} style="width:auto">촬영·콘텐츠 활용 서면 동의 확보</label></div>
+    <div class="field"><label>URL</label><input id="cf-url" value="${esc(c.url||'')}" placeholder="게시 후 링크"></div>
+    <div class="field"><label>메모</label><textarea id="cf-note" rows="3">${esc(c.note||'')}</textarea></div>
+    <div class="notice">⚠ 환자 식별 정보가 포함되면 촬영·콘텐츠 활용 동의서가 반드시 선행되어야 합니다.</div>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn primary" onclick="saveContent('${id||''}')">저장</button>
+      <button class="btn" onclick="closeDrawer()">취소</button>
+      ${id&&me.app_role==='admin'?`<div class="spacer"></div><button class="btn danger" onclick="if(confirm('삭제할까요?')){removeRow('contents','${id}');closeDrawer()}">삭제</button>`:''}</div>`);
+}
+async function saveContent(id){
+  const title = val('cf-title'); if (!title) return toast('제목은 필수입니다');
+  const pid = val('cf-p') || null, consent = chk('cf-consent');
+  if (val('cf-st') === '게시완료' && pid && !consent) return toast('환자 연계 소재는 동의 확보 후에만 게시완료로 바꿀 수 있습니다');
+  const row = { title, channel: val('cf-ch'), status: val('cf-st'), patient_id: pid,
+    consent, url: val('cf-url'), note: val('cf-note') };
+  if (id) row.id = id;
+  await save('contents', row); closeDrawer();
+}
+
+/* ---------- 설정 · 연동 ---------- */
+V.settings = () => {
+  const q = (LS.get(QUEUE)||[]).length;
+  return `
+  <div class="page-head"><div><h1>설정 · 데이터 연동</h1><p>접속 상태, 공공데이터 API 연동 계획, 개인정보 처리 원칙</p></div></div>
+  <div class="stack">
+    <div class="card"><h3>현재 접속 상태</h3><div class="sub">이 기기에서 앱이 어떻게 동작하고 있는지</div>
+      <dl class="kv" style="grid-template-columns:130px 1fr">
+        <dt>동작 모드</dt><dd>${LIVE?'<span class="tag good">실시간 공유 (Supabase)</span>':'<span class="tag warn">데모 모드 (이 기기에만 저장)</span>'}</dd>
+        <dt>네트워크</dt><dd>${online?'<span class="tag good">온라인</span>':'<span class="tag crit">오프라인</span>'}</dd>
+        <dt>전송 대기</dt><dd>${q?`<span class="tag warn">${q}건 대기 중</span> <button class="btn sm" onclick="flushQueue()">지금 전송</button>`:'<span class="muted">없음</span>'}</dd>
+        ${LIVE&&session?`<dt>로그인 계정</dt><dd>${esc(session.user.email)}</dd>
+        <dt>권한</dt><dd><span class="tag ${me.app_role==='viewer'?'warn':'good'}">${me.app_role}</span>
+          ${me.app_role==='viewer'?'<span class="sm muted"> — 조회만 가능. 원장님께 권한 상향을 요청하세요.</span>':''}</dd>`:''}
+        <dt>홈 화면 설치</dt><dd class="sm">모바일 브라우저 메뉴 → <strong>홈 화면에 추가</strong> 를 누르면 앱처럼 실행됩니다.</dd>
+      </dl>
+      ${!LIVE?`<div class="notice" style="margin-top:12px">현재는 데모 모드입니다. 치과 PC와 현장 휴대폰이 <strong>같은 데이터</strong>를 보게 하려면 index.html 상단의 <code>CONFIG</code> 두 줄에 Supabase 주소와 키를 넣어 주세요. (README 참고)</div>`:''}
+    </div>
+    <div class="grid g-2">
+      <div class="card"><h3>공공데이터 · 외부 연동</h3><div class="sub">실서비스 전환 시 연결할 지점</div>
+        <div class="tbl-wrap"><table><thead><tr><th>연동 대상</th><th>상태</th><th>용도</th></tr></thead><tbody>
+          ${[['보건복지부 통합돌봄 대상자 조회','설계중','시·군·구 통합지원회의 의뢰 대상자 연계 (기관 인증 필요)'],
+             ['국민건강보험공단 장기요양 등급 조회','설계중','등급·인정기간 확인. 본인 동의 기반 조회'],
+             ['심평원 요양기관 업무포털 (청구)','미연동','수가 확정 고시 후 EDI 청구 연계'],
+             ['행정안전부 도로명주소 API','설계중','방문지 주소 정규화 및 좌표 변환'],
+             ['공공데이터포털 요양기관 정보','설계중','협력 요양시설 기본정보 자동 채움'],
+             ['알림톡/SMS 발송','설계중','보호자 방문 전일 안내 및 사후관리 발송']]
+            .map(r=>`<tr><td><strong>${r[0]}</strong></td>
+              <td><span class="tag ${r[1]==='설계중'?'warn':''}">${r[1]}</span></td>
+              <td class="sm muted">${r[2]}</td></tr>`).join('')}</tbody></table></div></div>
+      <div class="card"><h3>개인정보 처리 원칙</h3><div class="sub">의료 데이터를 다루는 플랫폼의 최소 요건</div>
+        <div class="checklist">${['주민등록번호는 수집하지 않음 (환자코드로 식별)','로그인하지 않으면 환자 정보 접근 불가 (RLS)',
+          '권한 3단계 분리 — admin / staff / viewer','콘텐츠 활용 동의는 진료 동의와 분리 수집',
+          '동의 철회 요청 시 7일 내 처리 및 결과 통보','Supabase 리전은 서울(ap-northeast-2) 권장']
+          .map(t=>`<div class="checkitem done"><span style="color:#006300;font-weight:700;flex:0 0 16px">✓</span><span><span class="t">${t}</span></span></div>`).join('')}</div>
+        <div class="notice" style="margin-top:12px">⚠ 실제 환자 정보를 넣기 전에 개인정보 처리방침 수립과 법률 검토를 권장합니다.</div></div>
+    </div>
+    <div class="card"><h3>단계별 구현 로드맵</h3>
+      <div class="timeline" style="margin-top:12px">
+        ${[['1단계 · 완료','내부 운영 도구','접수·환자·일정·장비·의료진을 하나의 화면에서 관리'],
+           ['2단계 · 완료','원격 접속 · 실시간 공유','치과 PC와 방문 현장 휴대폰이 같은 데이터를 봄. 오프라인 입력 후 자동 전송'],
+           ['3단계','공공데이터 연계','도로명주소·요양기관 정보 연동, 장기요양 등급 조회(동의 기반)'],
+           ['4단계 · 고시 이후','청구 자동화','수가 확정 고시 반영, 심평원 EDI 청구 연계, 정산 자동화'],
+           ['5단계','협력 네트워크 확장','타 치과 참여의 온보딩, 장비 공유 스케줄링, 지자체 통합돌봄 창구 연동']]
+          .map((r,i)=>`<div class="tl-item ${i>1?'muted':''}"><div class="tl-date">${r[0]}</div>
+            <div class="tl-title">${r[1]}</div><div class="tl-body">${r[2]}</div></div>`).join('')}</div></div>
+  </div>`;
+};
+
+
+/* =====================================================================
+   보호자 · 환자 프론트 (로그인 불필요)
+   ===================================================================== */
+V['f-home'] = () => `
+  <div class="stack">
+    <div class="front-hero">
+      <span class="tag" style="background:rgba(255,255,255,.2);color:#fff;border:none">돌봄통합지원법 시행 · 2026</span>
+      <h2 style="margin-top:12px">병원에 가기 어려우신 어르신,<br>치과가 집으로 찾아갑니다</h2>
+      <p>${esc(CONFIG.CLINIC_NAME)} 방문진료팀이 재가·요양시설 어르신을 직접 방문해 진료와 구강관리를 제공합니다. 신청은 3분이면 충분합니다.</p>
+      <button class="btn" onclick="go('f-apply')">방문 신청하기 →</button></div>
+    <div class="grid g-3">
+      ${[['신청','전화 또는 온라인으로 신청하시면 담당 코디네이터가 연락드립니다.'],
+         ['초진 평가','치과의사가 방문해 구강상태와 전신상태를 함께 확인합니다.'],
+         ['치료 · 관리','치료 계획을 보호자와 상의한 뒤 정기적으로 방문합니다.']]
+        .map((s,i)=>`<div class="card"><div class="step"><span class="n">${i+1}</span>
+          <div><div style="font-weight:680;font-size:14.5px">${s[0]}</div>
+          <div class="sm muted" style="margin-top:4px;line-height:1.6">${s[1]}</div></div></div></div>`).join('')}
+    </div>
+    <div class="grid g-2">
+      <div class="card"><h3>이런 경우에 신청하세요</h3><div class="sub">아래 중 하나라도 해당되면 상담이 가능합니다</div>
+        <div class="checklist">${['스스로 치과에 방문하기 어렵다 (와상·휠체어·보행 곤란)','장기요양 등급을 받으셨다',
+          '요양시설 또는 요양병원에 계신다','틀니가 맞지 않아 식사가 어렵다','잇몸이 붓거나 통증이 있다',
+          '삼킴이 어렵거나 사레가 자주 들린다']
+          .map(t=>`<div class="checkitem"><span style="color:var(--series-1);font-weight:700;flex:0 0 16px">✓</span>
+            <span><span class="t">${t}</span></span></div>`).join('')}</div>
+        <button class="btn primary" style="margin-top:12px" onclick="go('f-check')">대상자 자가확인 하기</button></div>
+      <div class="card"><h3>자주 묻는 질문</h3><div class="sub">보호자분들이 가장 많이 물어보시는 내용</div>
+        <div class="stack" style="gap:12px">${[
+          ['비용은 얼마나 드나요?','2026년 6월 공개된 방문치과진료 수가 가이드라인에 따라 산정되며, 건강보험이 적용됩니다. 정확한 금액은 초진 평가 후 안내드립니다.'],
+          ['어떤 치료까지 가능한가요?','스케일링, 발치, 충전, 의치 조정 등 포터블 장비로 가능한 범위입니다. 전신상태에 따라 병원 이송이 필요할 수 있습니다.'],
+          ['보호자가 꼭 있어야 하나요?','네, 안전과 동의 확인을 위해 방문 시 보호자 또는 시설 담당자의 입회를 원칙으로 합니다.'],
+          ['얼마나 자주 방문하나요?','초진 평가 후 상태에 따라 결정하며, 보통 정기 구강관리는 1~3개월 간격입니다.']]
+          .map(f=>`<details style="border-bottom:1px solid var(--grid);padding-bottom:10px">
+            <summary style="cursor:pointer;font-weight:650;font-size:13.5px">${f[0]}</summary>
+            <div class="sm muted" style="margin-top:7px;line-height:1.7">${f[1]}</div></details>`).join('')}</div></div>
+    </div>
+  </div>`;
+
+V['f-apply'] = () => `
+  <div class="page-head"><div><h1>방문 신청</h1><p>입력해주신 내용은 담당 코디네이터만 열람하며, 상담 목적으로만 사용됩니다</p></div></div>
+  <div class="grid g-2">
+    <div class="card"><h3>신청서</h3><div class="sub">＊ 표시는 필수 항목입니다</div>
+      <div class="row"><div class="field"><label>어르신 성함 ＊</label><input id="fa-pname" placeholder="예: 김○자"></div>
+        <div class="field"><label>생년 ＊</label><input id="fa-birth" inputmode="numeric" placeholder="예: 1938"></div></div>
+      <div class="row"><div class="field"><label>신청자 성함 ＊</label><input id="fa-name" placeholder="보호자 성함"></div>
+        <div class="field"><label>관계 ＊</label><select id="fa-rel">${['자녀','배우자','기타 가족','시설 담당자']
+          .map(x=>`<option>${x}</option>`).join('')}</select></div></div>
+      <div class="field"><label>연락처 ＊</label><input id="fa-tel" inputmode="tel" placeholder="010-0000-0000">
+        <div class="hint">진행 상황 조회 시 이 번호의 뒷 4자리가 필요합니다.</div></div>
+      <div class="field"><label>거주 형태 ＊</label><div class="chips" id="fa-place">
+        ${['재가(자택)','요양시설','요양병원'].map((t,i)=>`<button class="chip" ${i===0?'aria-pressed="true"':''} onclick="pickOne(this)">${t}</button>`).join('')}</div></div>
+      <div class="field"><label>지역 ＊</label><input id="fa-region" placeholder="예: 성동구">
+        <div class="hint">엘리베이터 유무, 주차 가능 여부를 아래 메모에 함께 적어주시면 방문 준비에 도움이 됩니다.</div></div>
+      <div class="field"><label>불편하신 점 ＊</label><textarea id="fa-subj" rows="4" placeholder="예: 아랫니 잇몸이 붓고 아파서 식사를 잘 못하십니다."></textarea></div>
+      <div class="field"><label>복용 중인 약</label><div class="chips" id="fa-meds">
+        ${['혈액순환제/항응고제','골다공증약','당뇨약','혈압약','모름'].map(t=>`<button class="chip" onclick="pickMany(this)">${t}</button>`).join('')}</div>
+        <div class="hint">안전한 진료를 위해 꼭 필요한 정보입니다.</div></div>
+      <div class="field"><label>희망 방문 시간대</label><div class="chips" id="fa-time">
+        ${['평일 오전','평일 오후','토요일'].map(t=>`<button class="chip" onclick="pickMany(this)">${t}</button>`).join('')}</div></div>
+      <hr class="sep">
+      <div class="checklist">
+        <label class="checkitem"><input type="checkbox" id="fa-agree1">
+          <span><span class="t">개인정보 수집·이용 동의 (필수)</span><span class="d">상담 및 방문진료 목적. 보관 3년 후 파기.</span></span></label>
+        <label class="checkitem"><input type="checkbox" id="fa-agree2">
+          <span><span class="t">진료 안내 문자 수신 동의 (선택)</span><span class="d">방문 전일 안내 및 사후 관리 안내</span></span></label>
+      </div>
+      <button class="btn primary" style="width:100%;margin-top:12px" onclick="submitApply()">신청서 제출</button></div>
+    <div class="stack">
+      <div class="card"><h3>제출하면 이렇게 진행됩니다</h3>
+        <div class="timeline" style="margin-top:12px">
+          ${[['접수 확인','제출 즉시 접수번호가 화면에 표시됩니다. 꼭 메모해 두세요.'],
+             ['코디네이터 상담','영업일 기준 1일 이내 전화 상담 (약 10분)'],
+             ['대상자 확정','거주형태·전신상태·지역을 확인해 방문 가능 여부를 안내드립니다.'],
+             ['방문 일정 확정','희망 시간대를 반영해 초진 평가 일정을 잡습니다.'],
+             ['초진 방문','치과의사가 방문해 구강·전신상태를 평가하고 계획을 설명드립니다.']]
+            .map((r,i)=>`<div class="tl-item ${i>0?'muted':''}"><div class="tl-title">${r[0]}</div>
+              <div class="tl-body">${r[1]}</div></div>`).join('')}</div></div>
+      <div class="card"><h3>전화로 신청하기</h3><div class="sub">온라인 입력이 어려우시면 편하게 전화 주세요</div>
+        <div style="font-size:26px;font-weight:750;letter-spacing:-.03em;margin-top:4px">02-000-0000</div>
+        <div class="sm muted" style="margin-top:4px">평일 09:00 ~ 18:00 · 점심 13:00 ~ 14:00</div></div>
+    </div>
+  </div>`;
+async function submitApply(){
+  const pname = val('fa-pname'), name = val('fa-name'), tel = val('fa-tel'), subj = val('fa-subj');
+  if (!pname || !name || !tel || !subj) return toast('＊ 표시된 항목을 모두 입력해 주세요');
+  if (!chk('fa-agree1')) return toast('개인정보 수집·이용 동의가 필요합니다');
+  const place = picked('#fa-place')[0] || '재가(자택)';
+  const row = { received_at: new Date().toISOString(), channel:'홈페이지',
+    from_name: name, from_rel: val('fa-rel'), from_tel: tel,
+    subject: `${pname}(${val('fa-birth')||'생년 미상'}) · ${subj.slice(0,60)}`,
+    region: val('fa-region'),
+    note: `[홈페이지 신청]\n대상자: ${pname} / ${val('fa-birth')||'-'}\n거주: ${place}\n희망시간: ${picked('#fa-time').join(', ')||'-'}\n증상: ${subj}`,
+    meds_flags: picked('#fa-meds'), status:'신규' };
+  let ref = null;
+  if (LIVE){
+    const { data, error } = await sb.from('intakes').insert(row).select('ref_code').single();
+    if (error) return toast('신청 전송에 실패했습니다. 전화로 연락 주세요.');
+    ref = data?.ref_code;
+  } else {
+    ref = 'A-' + todayISO().replace(/-/g,'') + '-' + String(S.intakes.length+1).padStart(2,'0');
+    row.ref_code = ref; await save('intakes', row);
+  }
+  openDrawer('신청이 접수되었습니다', `<div class="stack">
+    <div style="text-align:center;padding:14px 0">
+      <div style="width:56px;height:56px;border-radius:50%;background:#e8f6e8;color:#006300;display:grid;place-items:center;font-size:26px;margin:0 auto">✓</div>
+      <h3 style="margin-top:14px;font-size:17px">접수번호 <span style="color:var(--series-1)">${esc(ref||'-')}</span></h3>
+      <p class="muted sm" style="margin-top:6px">영업일 기준 1일 이내에 담당 코디네이터가 연락드립니다.<br>
+        <strong>접수번호와 연락처 뒷 4자리</strong>로 진행 상황을 조회하실 수 있습니다.</p></div>
+    <button class="btn primary" onclick="closeDrawer();go('f-status')">진행 상황 조회하기</button></div>`);
+}
+
+V['f-check'] = () => `
+  <div class="page-head"><div><h1>대상자 자가확인</h1><p>몇 가지 질문으로 방문진료 대상이 되시는지 미리 확인해 보세요</p></div></div>
+  <div class="grid g-2">
+    <div class="card"><h3>자가확인 문항</h3><div class="sub">해당되는 항목을 선택하세요</div>
+      <div class="checklist" id="chk">
+        ${[['스스로 걸어서 치과에 가기 어렵다',3],['장기요양 등급을 받았다',3],['요양시설·요양병원에 계신다',2],
+           ['만 65세 이상이다',1],['틀니가 맞지 않거나 씹기 어렵다',2],['잇몸 통증·출혈이 있다',2],
+           ['사레가 자주 들리거나 삼키기 어렵다',2],['시·군·구 통합돌봄 창구에서 안내를 받았다',3]]
+          .map(q=>`<label class="checkitem"><input type="checkbox" data-w="${q[1]}" onchange="scoreCheck()">
+            <span><span class="t">${q[0]}</span></span></label>`).join('')}</div>
+      <div id="chk-out" style="margin-top:14px"></div></div>
+    <div class="card"><h3>방문진료로 가능한 것 / 어려운 것</h3><div class="sub">포터블 장비로 제공 가능한 범위</div>
+      <div style="display:grid;gap:8px;margin-top:6px">
+        <div class="sm muted" style="font-weight:700">가능</div>
+        ${['구강 검진 및 구강위생 관리','스케일링(치석 제거)','간단한 발치','충치 치료(레진 충전)','의치 조정·수리',
+           '구강기능 훈련 및 보호자 교육','휴대용 X-ray 촬영']
+          .map(t=>`<div style="display:flex;gap:8px;align-items:center"><span style="color:#006300;font-weight:700">✓</span><span class="sm">${t}</span></div>`).join('')}
+        <hr class="sep" style="margin:6px 0">
+        <div class="sm muted" style="font-weight:700">병원 방문이 필요한 경우</div>
+        ${['임플란트 등 수술적 처치','전신마취·진정이 필요한 치료','매복치 발치 등 난이도 높은 외과 처치','정밀 보철(크라운·브릿지) 제작 일부 단계']
+          .map(t=>`<div style="display:flex;gap:8px;align-items:center"><span style="color:var(--critical);font-weight:700">✕</span><span class="sm">${t}</span></div>`).join('')}
+      </div></div>
+  </div>`;
+function scoreCheck(){
+  const boxes = [...document.querySelectorAll('#chk input')];
+  const s = boxes.filter(b=>b.checked).reduce((a,b)=>a + (+b.dataset.w), 0);
+  boxes.forEach(b=>b.closest('.checkitem').classList.toggle('done', b.checked));
+  const out = document.getElementById('chk-out');
+  if (!s){ out.innerHTML = ''; return; }
+  const lvl = s >= 6 ? ['ok','방문진료 대상 가능성이 높습니다','바로 신청하시면 코디네이터가 확인 후 안내드립니다.']
+            : s >= 3 ? ['','상담을 통해 확인이 필요합니다','전화 상담에서 거주 형태와 전신상태를 함께 확인합니다.']
+                     : ['info','내원 진료를 먼저 권해드립니다','거동이 가능하시다면 치과 내원이 더 정밀한 진료에 유리합니다.'];
+  out.innerHTML = `<div class="notice ${lvl[0]}"><div><strong>${lvl[1]}</strong>
+    <div style="margin-top:3px;font-weight:500">${lvl[2]}</div></div></div>
+    <button class="btn primary" style="width:100%;margin-top:10px" onclick="go('f-apply')">방문 신청하러 가기</button>`;
+}
+
+V['f-status'] = () => `
+  <div class="page-head"><div><h1>진행 상황 조회</h1><p>접수번호와 신청자 연락처 뒷 4자리로 확인하실 수 있습니다</p></div></div>
+  <div class="grid g-2">
+    <div class="card"><h3>조회하기</h3>
+      <div class="field"><label>접수번호</label><input id="st-ref" placeholder="A-20260811-01"></div>
+      <div class="field"><label>연락처 뒷 4자리</label><input id="st-tel" inputmode="numeric" maxlength="4" placeholder="9080"
+        onkeydown="if(event.key==='Enter')lookupStatus()"></div>
+      <button class="btn primary" style="width:100%" onclick="lookupStatus()">조회</button>
+      <hr class="sep"><div class="sm muted">접수번호를 잊으셨다면 02-000-0000으로 연락 주세요.</div></div>
+    <div class="card" id="st-out"><div class="empty">조회 결과가 여기에 표시됩니다</div></div>
+  </div>`;
+async function lookupStatus(){
+  const ref = val('st-ref'), tel = val('st-tel');
+  const out = document.getElementById('st-out');
+  if (!ref || !tel) return toast('접수번호와 연락처 뒷 4자리를 입력하세요');
+  let r = null;
+  if (LIVE){
+    const { data } = await sb.rpc('guardian_status', { p_ref: ref, p_tel: tel });
+    r = data && data[0];
+  } else {
+    const i = S.intakes.find(x => x.ref_code === ref && (x.from_tel||'').replace(/\D/g,'').slice(-4) === tel);
+    if (i){
+      const p = S.patients.find(p => p.guardian_tel === i.from_tel) || null;
+      const v = p ? S.visits.filter(v=>v.patient_id===p.id && v.status==='예약').sort((a,b)=>a.visit_date.localeCompare(b.visit_date))[0] : null;
+      r = { ref_code:i.ref_code, person_name: p?.name || i.from_name, status:i.status,
+            next_date: v?.visit_date, next_time: v?.visit_time, doctor_name: v?staffN(v.doctor_id):null, next_title: v?.title };
+    }
+  }
+  if (!r){ out.innerHTML = `<div class="notice">일치하는 접수 내역이 없습니다. 접수번호와 연락처를 다시 확인해 주세요.</div>`; return; }
+  const steps = ['접수','상담','대상자 확정','일정 확정','초진 방문','정기 관리'];
+  const idx = { '신규':1, '상담중':2, '대상자 확정':3, '보류':1, '종결':6 }[r.status] || 1;
+  const done = r.next_date ? Math.max(idx,4) : idx;
+  out.innerHTML = `
+    <div class="between"><h3>${esc(r.ref_code)} · ${esc(r.person_name||'')} 어르신</h3>${statusTag(r.status)}</div>
+    <div class="track" style="margin-top:16px">${steps.map((t,i)=>`<div class="track-s ${i<done?'done':''}">${t}</div>`).join('')}</div>
+    <hr class="sep">
+    ${r.next_date ? `<dl class="kv"><dt>다음 방문</dt><dd><strong>${r.next_date} ${(r.next_time||'').slice(0,5)}</strong></dd>
+      <dt>담당</dt><dd>${esc(r.doctor_name||'배정 중')}</dd>
+      <dt>예정 진료</dt><dd>${esc(r.next_title||'-')}</dd>
+      <dt>준비 사항</dt><dd>복용 중인 약 봉투, 최근 혈액검사 결과지(있으실 경우)</dd></dl>`
+    : `<div class="notice info">아직 방문 일정이 확정되지 않았습니다. 코디네이터가 곧 연락드립니다.</div>`}`;
+}
+
+V['f-guide'] = () => `
+  <div class="page-head"><div><h1>제도 안내</h1><p>방문 치과진료를 뒷받침하는 제도를 쉽게 정리했습니다</p></div></div>
+  <div class="stack">
+    <div class="card"><h3>돌봄통합지원법이 무엇인가요?</h3>
+      <p style="font-size:13.5px;line-height:1.8;color:var(--ink-2)">정식 명칭은 <strong>「의료·요양 등 지역 돌봄의 통합지원에 관한 법률」</strong>로, 2026년 3월부터 시행되었습니다.
+      나이가 들거나 장애·질병으로 일상생활이 어려워진 분들이 <strong>살던 곳에서 계속 지내실 수 있도록</strong> 시·군·구가 의료·요양·돌봄 서비스를 하나로 묶어 지원하는 제도입니다.
+      이 법에 따라 <strong>치과의사가 가정이나 요양시설을 방문해 진료할 수 있는 근거</strong>가 마련되었고, 방문 구강관리도 지원 항목에 포함되었습니다.</p></div>
+    <div class="grid g-2">
+      <div class="card"><h3>비용은 어떻게 되나요?</h3>
+        <p class="sm" style="color:var(--ink-2);line-height:1.8">2026년 6월, 방문치과진료에 대한 <strong>수가 1차 가이드라인</strong>이 공개되었습니다.
+        방문 진료비는 진찰·검사·교육을 묶은 포괄수가 형태이며, 장비를 옮겨야 하는 경우 장비 이송·관리료가 함께 산정됩니다.
+        건강보험이 적용되므로 보호자께서 부담하시는 금액은 전체 진료비의 일부입니다.</p>
+        <div class="notice" style="margin-top:12px">아직 <strong>확정 고시 전 단계</strong>여서 정확한 금액은 초진 평가 후 개별 안내드립니다.</div></div>
+      <div class="card"><h3>어디에 문의하면 되나요?</h3>
+        <div class="stack" style="gap:12px;margin-top:6px">${[
+          [`${CONFIG.CLINIC_NAME} 방문진료팀`,'02-000-0000 · 평일 09:00~18:00'],
+          ['거주지 시·군·구 통합돌봄 창구','통합지원 신청 및 대상자 판정'],
+          ['국민건강보험공단 1577-1000','장기요양 등급 신청 및 조회'],
+          ['보건복지상담센터 129','복지·의료 제도 전반 상담']]
+          .map(r=>`<div style="border-left:3px solid var(--series-1);padding:2px 0 2px 12px">
+            <div style="font-weight:680;font-size:13.5px">${esc(r[0])}</div>
+            <div class="sm muted" style="margin-top:2px">${r[1]}</div></div>`).join('')}</div></div>
+    </div>
+    <div class="card"><h3>일본은 40년 전부터 해왔습니다</h3>
+      <p class="sm" style="color:var(--ink-2);line-height:1.8">일본은 1980년대부터 방문 치과진료를 제도화해, 현재는 재가·시설 어르신의 구강관리가 일상적인 의료 서비스로 자리 잡았습니다.
+      구강 기능이 유지되면 폐렴 발생이 줄고, 식사가 가능해지면 전신 건강과 삶의 질이 함께 좋아집니다.
+      한국도 2026년 돌봄통합지원법 시행과 함께 이제 막 그 출발선에 섰습니다.</p></div>
+  </div>`;
+
+/* =====================================================================
+   시작
+   ===================================================================== */
+(async function init(){
+  const th = LS.get('homedenti.theme');
+  if (th) document.documentElement.setAttribute('data-theme', th);
+  if (LIVE){
+    sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    await initAuth();
+    if (session){ await loadAll(); subscribeRealtime(); flushQueue(); }
+    else { Object.assign(S, demoSeed()); }   // 비로그인 상태에서도 보호자 프론트는 동작
+  } else {
+    await loadAll();
+  }
+  boot();
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http'))
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+})();
+
+</script>
+</body>
+</html>
