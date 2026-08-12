@@ -505,27 +505,59 @@ async function flushQueue(){
    인증 · 실시간
    ===================================================================== */
 async function initAuth(){
-  const { data } = await sb.auth.getSession();
-  session = data.session;
-  if (session) await loadMe();
+  let data = { session: null };
+  try { ({ data } = await sb.auth.getSession()); } catch(e){}
+  session = data?.session || null;
+  if (session) { try { await loadMe(); } catch(e){} }
   sb.auth.onAuthStateChange(async (_e, s) => {
     session = s;
-    if (s) { await loadMe(); await loadAll(); subscribeRealtime(); }
+    if (s) { await loadMe(); await loadAll(); lastSync = new Date(); subscribeRealtime(); startAutoRefresh(); }
     boot();
   });
 }
 async function loadMe(){
-  const { data } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
-  me = data || { name: session.user.email, app_role: 'viewer' };
+  try {
+    const { data } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+    if (data) { me = data; LS.set('dolbom.me', data); return; }
+  } catch(e){}
+  // 서버에 닿지 못하면 마지막으로 확인된 권한을 사용 (오프라인 현장 대비)
+  me = LS.get('dolbom.me') || { name: session.user.email, app_role: 'pending' };
 }
-let channel = null;
+let channel = null, lastSync = null, pollTimer = null;
+
+/* 동기화는 두 겹으로 보장합니다.
+   ① 실시간 구독(빠름)  ② 주기적 자동 새로고침(확실함)
+   실시간이 어떤 이유로든 이벤트를 놓쳐도 ②가 최대 20초 안에 따라잡습니다. */
 function subscribeRealtime(){
   if (!LIVE || channel) return;
   channel = sb.channel('dolbom-all');
-  TABLES.forEach(t => channel.on('postgres_changes', {event:'*', schema:'public', table:t}, async () => {
-    await loadAll(); render();
-  }));
+  TABLES.forEach(t => channel.on('postgres_changes', {event:'*', schema:'public', table:t}, () => syncNow()));
   channel.subscribe();
+}
+
+let syncing = false;
+async function syncNow(force){
+  if (!LIVE || !session || syncing) return;
+  if (!force && !online) return;
+  syncing = true;
+  try {
+    await loadAll();
+    lastSync = new Date();
+    // 입력 중인 창이 열려 있으면 화면을 갈아엎지 않습니다 (작성 중 내용 보호)
+    if (!document.getElementById('drawer')?.classList.contains('open')) render();
+    updateNetChip();
+  } finally { syncing = false; }
+}
+
+function startAutoRefresh(){
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(() => {
+    if (document.visibilityState === 'visible') syncNow();
+  }, 20000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') syncNow();
+  });
+  window.addEventListener('focus', () => syncNow());
 }
 async function signIn(email, pw){
   const { error } = await sb.auth.signInWithPassword({ email, password: pw });
@@ -550,7 +582,11 @@ function updateNetChip(){
   const cls = !LIVE ? 'demo' : (online ? 'on' : 'off');
   el.className = 'net ' + (cls === 'on' ? '' : cls);
   const lbl = document.getElementById('netlabel');
-  if (lbl) lbl.textContent = !LIVE ? '데모 모드' : (online ? (q ? `전송대기 ${q}` : '실시간 연결') : '오프라인');
+  if (lbl){
+    const t = lastSync ? lastSync.toTimeString().slice(0,5) : '';
+    lbl.textContent = !LIVE ? '데모 모드'
+      : (online ? (q ? `전송대기 ${q}` : (t ? `동기화 ${t}` : '실시간 연결')) : '오프라인');
+  }
 }
 window.addEventListener('online',  () => { online = true;  updateNetChip(); flushQueue(); });
 window.addEventListener('offline', () => { online = false; updateNetChip(); toast('오프라인 — 입력은 기기에 저장됩니다'); });
@@ -686,7 +722,7 @@ function shell(){
     <div class="logo"><span class="mark">돌</span>
       <span>돌봄<small>트리즈컴퍼니 × ${esc(CONFIG.CLINIC_NAME)} 방문진료</small></span></div>
     <div class="spacer"></div>
-    <span class="who"><span class="net" id="netchip"></span><span id="netlabel"></span></span>
+    <button class="who" onclick="syncNow(true)" title="지금 동기화"><span class="net" id="netchip"></span><span id="netlabel"></span></button>
     <div class="seg" role="group" aria-label="화면 모드">
       <button aria-pressed="${MODE==='admin'}" onclick="setMode('admin')">운영 어드민</button>
       <button aria-pressed="${MODE==='front'}" onclick="setMode('front')">보호자 프론트</button>
@@ -1579,6 +1615,8 @@ V.settings = () => {
         <dt>동작 모드</dt><dd>${LIVE?'<span class="tag good">실시간 공유 (Supabase)</span>':'<span class="tag warn">데모 모드 (이 기기에만 저장)</span>'}</dd>
         <dt>네트워크</dt><dd>${online?'<span class="tag good">온라인</span>':'<span class="tag crit">오프라인</span>'}</dd>
         <dt>전송 대기</dt><dd>${q?`<span class="tag warn">${q}건 대기 중</span> <button class="btn sm" onclick="flushQueue()">지금 전송</button>`:'<span class="muted">없음</span>'}</dd>
+        <dt>마지막 동기화</dt><dd>${lastSync?`${lastSync.toTimeString().slice(0,8)} <button class="btn sm" onclick="syncNow(true)">지금 동기화</button>`:'<span class="muted">-</span>'}
+          <div class="hint">20초마다 자동으로 최신 데이터를 확인하고, 다른 기기의 변경은 실시간으로도 들어옵니다.</div></dd>
         ${LIVE&&session?`<dt>로그인 계정</dt><dd>${esc(session.user.email)}</dd>
         <dt>권한</dt><dd><span class="tag ${me.app_role==='viewer'?'warn':'good'}">${me.app_role}</span>
           ${me.app_role==='viewer'?'<span class="sm muted"> — 조회만 가능. 원장님께 권한 상향을 요청하세요.</span>':''}</dd>`:''}
@@ -1844,13 +1882,24 @@ V['f-guide'] = () => `
 (async function init(){
   const th = LS.get('dolbom.theme');
   if (th) document.documentElement.setAttribute('data-theme', th);
-  if (LIVE){
-    sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-    await initAuth();
-    if (session){ await loadAll(); subscribeRealtime(); flushQueue(); }
-    else { Object.assign(S, demoSeed()); }   // 비로그인 상태에서도 보호자 프론트는 동작
-  } else {
-    await loadAll();
+  try {
+    if (LIVE){
+      sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+      await initAuth();
+      if (session){
+        await loadAll(); lastSync = new Date();
+        subscribeRealtime(); startAutoRefresh(); flushQueue();
+      } else {
+        Object.assign(S, demoSeed());   // 비로그인 상태에서도 보호자 프론트는 동작
+      }
+    } else {
+      await loadAll();
+    }
+  } catch (e) {
+    // 서버에 닿지 못해도 앱은 반드시 뜨게 합니다 (현장 오프라인 대비)
+    const cached = LS.get(SNAP);
+    Object.assign(S, (cached && cached.patients) ? cached : demoSeed());
+    setNet('off');
   }
   boot();
   if ('serviceWorker' in navigator && location.protocol.startsWith('http'))

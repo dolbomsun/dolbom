@@ -3,7 +3,7 @@
      인터넷이 끊겼을 때만 캐시본으로 실행합니다. (기기마다 옛 버전이 남는 문제 방지)
    · 아이콘·매니페스트 같은 정적 자원은 캐시 우선
    · Supabase API는 네트워크 우선, 실패 시 마지막 응답 사용 */
-const V = 'dolbom-v3';
+const V = 'dolbom-v4';
 const SHELL = [
   './',
   './index.html',
