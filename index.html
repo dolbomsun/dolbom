@@ -511,7 +511,7 @@ async function initAuth(){
   if (session) { try { await loadMe(); } catch(e){} }
   sb.auth.onAuthStateChange(async (_e, s) => {
     session = s;
-    if (s) { await loadMe(); await loadAll(); lastSync = new Date(); await govKeyStatus(); subscribeRealtime(); startAutoRefresh(); }
+    if (s) { await loadMe(); await loadAll(); lastSync = new Date(); await govKeyStatus(); await loadSettings(); subscribeRealtime(); startAutoRefresh(); }
     boot();
   });
 }
@@ -702,6 +702,51 @@ function hbarChart(data){
    공공데이터 게이트웨이 (Supabase 안의 gov_call 함수를 통해 호출)
    인증키는 서버에만 있고 브라우저로 내려오지 않습니다.
    ===================================================================== */
+let SETTINGS = {};
+async function loadSettings(){
+  if (!LIVE || !session) return;
+  const { data } = await sb.from('app_settings').select('key,value');
+  SETTINGS = Object.fromEntries((data||[]).map(r => [r.key, r.value]));
+  LS.set('dolbom.settings', SETTINGS);
+}
+async function saveSetting(key, value){
+  const { error } = await sb.from('app_settings').upsert({ key, value: value || null });
+  if (error) return toast('저장 실패: ' + error.message);
+  await loadSettings(); toast('저장했습니다'); render();
+}
+
+/* 환자 상태별 색 — 지도 마커와 범례가 같은 값을 씁니다.
+   색만으로 구분하지 않도록 범례·말풍선에 항상 상태 이름을 함께 표시합니다. */
+const STATUS_COLOR = {
+  '진행중':      '#0ca30c',
+  '대상자 확정': '#2a78d6',
+  '상담중':      '#fab219',
+  '보류':        '#ec835a',
+  '종료':        '#898781'
+};
+
+/* 좌표가 없는 환자도 지도에 보이도록 하는 지역 중심 좌표 (대략 위치) */
+const REGION_CENTER = {
+  '성동구':[37.5634,127.0369],'광진구':[37.5385,127.0823],'중랑구':[37.6066,127.0927],
+  '동대문구':[37.5744,127.0396],'성북구':[37.5894,127.0167],'강북구':[37.6396,127.0257],
+  '노원구':[37.6542,127.0568],'도봉구':[37.6688,127.0471],'종로구':[37.5735,126.9790],
+  '중구':[37.5636,126.9976],'용산구':[37.5324,126.9910],'서대문구':[37.5791,126.9368],
+  '마포구':[37.5663,126.9019],'은평구':[37.6027,126.9291],'양천구':[37.5169,126.8664],
+  '강서구':[37.5509,126.8495],'구로구':[37.4954,126.8874],'금천구':[37.4569,126.8956],
+  '영등포구':[37.5264,126.8962],'동작구':[37.5124,126.9393],'관악구':[37.4784,126.9516],
+  '서초구':[37.4836,127.0327],'강남구':[37.5172,127.0473],'송파구':[37.5145,127.1059],
+  '강동구':[37.5301,127.1238],
+  '고양시':[37.6584,126.8320],'성남시':[37.4200,127.1265],'수원시':[37.2636,127.0286],
+  '부천시':[37.5035,126.7660],'안양시':[37.3943,126.9568],'남양주시':[37.6360,127.2165],
+  '구리시':[37.5943,127.1296],'하남시':[37.5393,127.2148]
+};
+function patientPoint(p){
+  if (p.lat && p.lon) return { lat:+p.lat, lng:+p.lon, exact:true };
+  const c = REGION_CENTER[p.region];
+  if (c) return { lat:c[0], lng:c[1], exact:false };
+  return null;
+}
+
 let GOVKEYS = [];
 async function govKeyStatus(){
   if (!LIVE || !session) return [];
@@ -1021,14 +1066,19 @@ async function convertIntake(id){
 }
 
 /* ---------- 환자 관리 ---------- */
-let pq = '', pfs = '', pfr = '';
+let pq = '', pfs = '', pfr = '', pview = 'list';
 V.patients = () => {
   const list = S.patients.filter(p =>
     (!pq || (p.name + (p.region||'') + (p.guardian_name||'') + (p.code||'')).includes(pq)) &&
     (!pfs || p.status === pfs) && (!pfr || p.region === pfr));
   return `
   <div class="page-head"><div><h1>환자 관리</h1><p>인적사항 · 전신상태 · 치료 히스토리를 한 곳에서 관리합니다</p></div>
-    <div class="spacer"></div>${canEdit()?`<button class="btn primary" onclick="formPatient()">＋ 환자 등록</button>`:''}</div>
+    <div class="spacer"></div>
+    <div class="seg" role="group" aria-label="보기 방식">
+      <button aria-pressed="${pview==='list'}" onclick="pview='list';render()">목록</button>
+      <button aria-pressed="${pview==='map'}"  onclick="pview='map';render()">지도</button>
+    </div>
+    ${canEdit()?`<button class="btn primary" onclick="formPatient()">＋ 환자 등록</button>`:''}</div>
   <div class="searchbar">
     <input value="${esc(pq)}" placeholder="이름 · 지역 · 보호자 · 환자코드 검색" oninput="pq=this.value;renderList()">
     <select onchange="pfs=this.value;render()"><option value="">전체 상태</option>
@@ -1036,11 +1086,161 @@ V.patients = () => {
     <select onchange="pfr=this.value;render()"><option value="">전체 지역</option>
       ${[...new Set(S.patients.map(p=>p.region).filter(Boolean))].map(r=>`<option ${pfr===r?'selected':''}>${r}</option>`).join('')}</select>
   </div>
-  <div class="card">${list.length ? `<div class="tbl-wrap"><table>
+  ${pview === 'map' ? mapPanel(list) : `<div class="card">${list.length ? `<div class="tbl-wrap"><table>
     <thead><tr><th>환자</th><th>연령/성별</th><th>지역 · 거주</th><th>장기요양</th><th>구강상태</th><th>담당의</th><th>상태</th></tr></thead>
     <tbody id="ptbody">${list.map(pRow).join('')}</tbody></table></div>`
-    : '<div class="empty">조건에 맞는 환자가 없습니다</div>'}</div>`;
+    : '<div class="empty">조건에 맞는 환자가 없습니다</div>'}</div>`}`;
 };
+
+/* ---------- 구글맵 로딩 · 마커 ---------- */
+let gmapsPromise = null, gmap = null, gmarkers = [], ginfo = null;
+function loadGoogleMaps(key){
+  if (window.google?.maps) return Promise.resolve();
+  if (gmapsPromise) return gmapsPromise;
+  gmapsPromise = new Promise((res, rej) => {
+    const sc = document.createElement('script');
+    sc.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=geocoding&language=ko&region=KR`;
+    sc.async = true; sc.onload = res;
+    sc.onerror = () => { gmapsPromise = null; rej(new Error('지도를 불러오지 못했습니다')); };
+    document.head.appendChild(sc);
+  });
+  return gmapsPromise;
+}
+
+async function initPatientMap(list){
+  const el = document.getElementById('pmap'); if (!el) return;
+  try { await loadGoogleMaps(SETTINGS.google_maps_key); }
+  catch(e){
+    el.outerHTML = `<div class="notice">지도를 불러오지 못했습니다. 키가 올바른지, <strong>Maps JavaScript API</strong>가 켜져 있는지,
+      리퍼러 제한에 <code>https://dolbomsun.github.io/*</code>가 들어 있는지 확인해 주세요.</div>`;
+    return;
+  }
+  const pts = list.map(p => ({ p, pt: patientPoint(p) })).filter(x => x.pt);
+  gmap = new google.maps.Map(el, {
+    center: pts.length ? pts[0].pt : { lat:37.5634, lng:127.0369 },
+    zoom: pts.length > 1 ? 11 : 14,
+    mapTypeControl: false, streetViewControl: false, fullscreenControl: true,
+    styles: document.documentElement.getAttribute('data-theme') === 'dark'
+      ? [{elementType:'geometry',stylers:[{color:'#1f2225'}]},
+         {elementType:'labels.text.fill',stylers:[{color:'#9aa0a6'}]},
+         {elementType:'labels.text.stroke',stylers:[{color:'#1f2225'}]},
+         {featureType:'water',elementType:'geometry',stylers:[{color:'#13161a'}]},
+         {featureType:'road',elementType:'geometry',stylers:[{color:'#2b2f33'}]},
+         {featureType:'poi',stylers:[{visibility:'off'}]}]
+      : [{featureType:'poi',stylers:[{visibility:'off'}]}]
+  });
+  ginfo = new google.maps.InfoWindow();
+  gmarkers.forEach(m => m.setMap(null)); gmarkers = [];
+
+  const bounds = new google.maps.LatLngBounds();
+  pts.forEach(({p, pt}) => {
+    const color = STATUS_COLOR[p.status] || '#898781';
+    const m = new google.maps.Marker({
+      position: pt, map: gmap, title: `${p.name} · ${p.status}`,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: pt.exact ? 11 : 9,
+        fillColor: color, fillOpacity: pt.exact ? 0.95 : 0.45,
+        strokeColor: '#ffffff', strokeWeight: pt.exact ? 2.5 : 2
+      },
+      label: { text: p.name.slice(0,1), color:'#fff', fontSize:'11px', fontWeight:'700' }
+    });
+    m.addListener('click', () => {
+      ginfo.setContent(`<div style="font-family:system-ui,-apple-system,sans-serif;min-width:190px;line-height:1.5">
+        <div style="font-weight:700;font-size:14px">${esc(p.name)}
+          <span style="font-weight:500;color:#666">${age(p.birth_year)?age(p.birth_year)+'세 ':''}${p.sex||''}</span></div>
+        <div style="margin-top:4px;font-size:12px">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:5px"></span>
+          <strong>${esc(p.status)}</strong>
+        </div>
+        <div style="font-size:12px;color:#555;margin-top:4px">
+          ${esc(p.region||'')} · ${esc(p.place||'')}<br>${esc(p.address||'주소 미입력')}
+          ${p.mobility?`<br>${esc(p.mobility)}`:''}
+          ${(p.risks||[]).length?`<br><span style="color:#b3261e">⚠ ${esc((p.risks||[]).join(' · '))}</span>`:''}
+          ${pt.exact?'':'<br><span style="color:#8a6d00">◌ 지역 중심으로 표시한 대략 위치</span>'}
+        </div>
+        <button onclick="ginfo.close();showPatient('${p.id}')"
+          style="margin-top:8px;padding:6px 11px;border:none;border-radius:8px;background:#2a78d6;color:#fff;font-weight:650;cursor:pointer">
+          환자 카드 열기</button></div>`);
+      ginfo.open({ anchor: m, map: gmap });
+    });
+    gmarkers.push(m); bounds.extend(pt);
+  });
+  if (pts.length > 1) gmap.fitBounds(bounds, 60);
+}
+
+/* 좌표가 없는 환자를 주소로 일괄 지오코딩 */
+async function geocodeMissing(){
+  if (!canEdit()) return toast('수정 권한이 필요합니다');
+  const targets = S.patients.filter(p => !p.lat && p.address);
+  if (!targets.length) return toast('주소는 있는데 좌표가 없는 환자가 없습니다');
+  try { await loadGoogleMaps(SETTINGS.google_maps_key); } catch(e){ return toast('지도를 불러오지 못했습니다'); }
+  const gc = new google.maps.Geocoder();
+  let done = 0;
+  toast(`${targets.length}명 좌표 조회 중…`);
+  for (const p of targets){
+    try {
+      const r = await gc.geocode({ address: p.address, region: 'KR' });
+      const loc = r.results?.[0]?.geometry?.location;
+      if (loc){ await save('patients', { id:p.id, lat: loc.lat(), lon: loc.lng() }); done++; }
+    } catch(e){}
+    await new Promise(r => setTimeout(r, 220));   // 호출 간격
+  }
+  toast(`${done}명 좌표를 저장했습니다`); render();
+}
+
+/* ---------- 지도 보기 ---------- */
+function mapPanel(list){
+  const counts = {};
+  list.forEach(p => { counts[p.status] = (counts[p.status]||0) + 1; });
+  const placed  = list.filter(p => patientPoint(p));
+  const approx  = placed.filter(p => !patientPoint(p).exact).length;
+  const missing = list.length - placed.length;
+  const key = SETTINGS.google_maps_key;
+
+  const legend = `<div class="chips" style="margin-top:12px">
+    ${Object.entries(STATUS_COLOR).map(([st,c]) =>
+      `<span class="tag"><span class="dot" style="background:${c}"></span>${st} ${counts[st]||0}</span>`).join('')}
+    ${approx?`<span class="tag warn">◌ 대략 위치 ${approx}</span>`:''}
+    ${missing?`<span class="tag crit">지도 표시 불가 ${missing}</span>`:''}
+  </div>`;
+
+  if (!key){
+    return `<div class="card"><h3>지도 보기</h3><div class="sub">환자 거주 위치를 상태별 색으로 표시합니다</div>
+      <div class="notice">🔑 <strong>구글맵 키가 아직 없습니다.</strong>
+        <div style="margin-top:5px;font-weight:500">Google Cloud에서 <strong>Maps JavaScript API</strong>와 <strong>Geocoding API</strong>를 켜고 키를 발급한 뒤,
+        설정 화면에 넣으면 이 화면이 지도로 바뀝니다. 키에는 반드시 <code>https://dolbomsun.github.io/*</code> 리퍼러 제한을 거세요.</div>
+        <button class="btn sm" style="margin-top:8px" onclick="go('settings')">설정으로 이동</button></div>
+      ${legend}
+      <hr class="sep">
+      <div class="sub">키를 넣기 전에도 지역별 분포는 아래에서 볼 수 있습니다</div>
+      ${regionByStatus(list)}</div>`;
+  }
+
+  setTimeout(() => initPatientMap(list), 30);
+  return `<div class="card"><div class="between"><div><h3>지도 보기</h3>
+      <div class="sub">색은 진행 상태 · 점선 테두리는 지역 중심으로 표시한 대략 위치입니다</div></div>
+      <button class="btn sm" onclick="geocodeMissing()">주소로 좌표 채우기</button></div>
+    <div id="pmap" style="height:min(62vh,560px);border-radius:12px;border:1px solid var(--border);background:var(--plane)"></div>
+    ${legend}
+    ${missing?`<div class="notice" style="margin-top:10px">지역과 좌표가 모두 없는 환자 ${missing}명은 지도에 표시되지 않습니다. 환자 정보에 지역을 입력해 주세요.</div>`:''}
+  </div>`;
+}
+
+/* 지역 × 상태 분포 (지도 키가 없을 때도 보이는 대체 화면) */
+function regionByStatus(list){
+  const regions = [...new Set(list.map(p => p.region).filter(Boolean))];
+  if (!regions.length) return '<div class="empty">지역 정보가 있는 환자가 없습니다</div>';
+  const sts = Object.keys(STATUS_COLOR);
+  return `<div class="tbl-wrap"><table><thead><tr><th>지역</th>
+    ${sts.map(x=>`<th class="num">${x}</th>`).join('')}<th class="num">합계</th></tr></thead>
+    <tbody>${regions.map(r=>{
+      const row = sts.map(x => list.filter(p=>p.region===r && p.status===x).length);
+      return `<tr><td><strong>${esc(r)}</strong></td>
+        ${row.map((n,i)=>`<td class="num">${n?`<span class="tag" style="background:${STATUS_COLOR[sts[i]]}22;color:${STATUS_COLOR[sts[i]]};border:none">${n}</span>`:'<span class="muted">-</span>'}</td>`).join('')}
+        <td class="num"><strong>${row.reduce((a,b)=>a+b,0)}</strong></td></tr>`;
+    }).join('')}</tbody></table></div>`;
+}
 const pRow = p => `<tr data-click onclick="showPatient('${p.id}')">
   <td><strong>${esc(p.name)}</strong><div class="sm muted">${esc(p.code||'')}${p.guardian_name?` · 보호자 ${esc(p.guardian_name)}(${esc(p.guardian_rel||'')})`:''}</div></td>
   <td class="num" style="text-align:left">${age(p.birth_year)?age(p.birth_year)+'세':'-'} / ${p.sex||'-'}</td>
@@ -1822,7 +2022,16 @@ V.settings = () => {
           <div style="display:flex;gap:6px"><input id="k-juso" type="password" placeholder="juso.go.kr 승인키" style="flex:1">
             <button class="btn primary" onclick="saveGovKey('juso', val('k-juso'))">저장</button></div>
           <div class="hint">business.juso.go.kr → 도로명주소 검색 API 신청 (좌표가 필요하면 좌표제공 API도 함께)</div></div>
-        <div class="notice info">저장된 키는 <strong>브라우저로 내려오지 않습니다.</strong> 데이터베이스 안에만 있고, 조회는 서버 쪽 함수가 대신 수행합니다.</div>
+        <div class="notice info">위 두 키는 <strong>브라우저로 내려오지 않습니다.</strong> 데이터베이스 안에만 있고, 조회는 서버 쪽 함수가 대신 수행합니다.</div>
+        <hr class="sep">
+        <div class="field"><label>구글맵 키 ${SETTINGS.google_maps_key?'<span class="tag good">설정됨</span>':'<span class="tag crit">미설정</span>'}</label>
+          <div style="display:flex;gap:6px"><input id="k-gmap" placeholder="AIza..." style="flex:1" value="${esc(SETTINGS.google_maps_key||'')}">
+            <button class="btn primary" onclick="saveSetting('google_maps_key', val('k-gmap'))">저장</button></div>
+          <div class="hint">Google Cloud → <strong>Maps JavaScript API</strong> + <strong>Geocoding API</strong> 사용 설정 → 키 발급.
+            환자 관리의 <strong>지도 보기</strong>에 쓰입니다.</div></div>
+        <div class="notice">⚠ 구글맵 키는 브라우저에서 동작하는 특성상 화면에 노출됩니다.
+          Google Cloud의 <strong>애플리케이션 제한 → HTTP 리퍼러</strong>에 <code>https://dolbomsun.github.io/*</code>를 반드시 등록해
+          다른 사이트에서 쓰지 못하게 막고, 결제 알림(예산 알림)도 설정해 두세요.</div>
         <hr class="sep">`:'<div class="notice info">인증키 설정은 admin 권한에서만 가능합니다.</div><hr class="sep">'}
         <div class="tbl-wrap"><table><thead><tr><th>연동 대상</th><th>상태</th><th>용도</th></tr></thead><tbody>
           ${[['식약처 의약품 DUR — 노인주의','data_go_kr','복용약의 65세 이상 주의 성분을 환자 카드에서 자동 확인'],
@@ -2096,7 +2305,7 @@ V['f-guide'] = () => `
       await initAuth();
       if (session){
         await loadAll(); lastSync = new Date();
-        await govKeyStatus();
+        await govKeyStatus(); await loadSettings();
         subscribeRealtime(); startAutoRefresh(); flushQueue();
       } else {
         Object.assign(S, demoSeed());   // 비로그인 상태에서도 보호자 프론트는 동작
