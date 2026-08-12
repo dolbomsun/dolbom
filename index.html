@@ -511,7 +511,7 @@ async function initAuth(){
   if (session) { try { await loadMe(); } catch(e){} }
   sb.auth.onAuthStateChange(async (_e, s) => {
     session = s;
-    if (s) { await loadMe(); await loadAll(); lastSync = new Date(); subscribeRealtime(); startAutoRefresh(); }
+    if (s) { await loadMe(); await loadAll(); lastSync = new Date(); await govKeyStatus(); subscribeRealtime(); startAutoRefresh(); }
     boot();
   });
 }
@@ -698,6 +698,46 @@ function hbarChart(data){
         <text x="${lw+Math.max(bw,3)+8}" y="${y+16}" font-size="12.5" font-weight="700" fill="var(--ink)">${d.v}명</text></g>`}).join('')}
   </svg>`;
 }
+/* =====================================================================
+   공공데이터 게이트웨이 (Supabase 안의 gov_call 함수를 통해 호출)
+   인증키는 서버에만 있고 브라우저로 내려오지 않습니다.
+   ===================================================================== */
+let GOVKEYS = [];
+async function govKeyStatus(){
+  if (!LIVE || !session) return [];
+  const { data } = await sb.rpc('api_key_status');
+  GOVKEYS = (data || []).map(k => k.name);
+  return GOVKEYS;
+}
+const govReady = which => GOVKEYS.includes(which);
+
+async function gov(api, params){
+  if (!LIVE || !session) return { ok:false, error:'로그인이 필요합니다' };
+  if (!online) return { ok:false, error:'오프라인 — 연결되면 다시 시도하세요' };
+  const { data, error } = await sb.rpc('gov_call', { p_api: api, p_params: params || {} });
+  if (error) return { ok:false, error: error.message };
+  return data;
+}
+/* 공공 API 응답은 기관마다 모양이 달라 items 위치가 제각각입니다 */
+function govItems(res){
+  const d = res?.data;
+  if (!d) return [];
+  const cands = [
+    d?.body?.items, d?.response?.body?.items, d?.results?.juso,
+    d?.body?.items?.item, d?.response?.body?.items?.item
+  ];
+  for (const c of cands){
+    if (Array.isArray(c)) return c;
+    if (c && typeof c === 'object') return [c];
+  }
+  return [];
+}
+async function saveGovKey(name, value){
+  const { error } = await sb.rpc('set_api_key', { p_name: name, p_value: value });
+  if (error) return toast('저장 실패: ' + error.message);
+  await govKeyStatus(); toast('인증키를 저장했습니다'); render();
+}
+
 const val = id => (document.getElementById(id)?.value || '').trim();
 const chk = id => !!document.getElementById(id)?.checked;
 const picked = sel => [...document.querySelectorAll(sel + ' [aria-pressed="true"]')].map(b => b.dataset.v || b.textContent.trim());
@@ -1032,7 +1072,10 @@ function showPatient(id){
       <dl class="kv">
         <dt>연락처</dt><dd>${esc(p.tel||'-')}</dd>
         <dt>보호자</dt><dd>${esc(p.guardian_name||'-')} ${p.guardian_rel?`(${esc(p.guardian_rel)})`:''} · ${esc(p.guardian_tel||'-')}</dd>
-        <dt>방문지</dt><dd>${esc(p.address||'-')} ${p.place?`<span class="tag">${p.place}</span>`:''}</dd>
+        <dt>방문지</dt><dd>${esc(p.address||'-')} ${p.place?`<span class="tag">${p.place}</span>`:''}
+          ${p.zipcode?`<span class="sm muted">(${esc(p.zipcode)})</span>`:''}
+          ${p.memo?`<div class="sm muted" style="margin-top:2px">${esc(p.memo)}</div>`:''}</dd>
+        ${p.facility_name?`<dt>시설</dt><dd>${esc(p.facility_name)}${p.facility_tel?` · ${esc(p.facility_tel)}`:''}</dd>`:''}
         <dt>거동</dt><dd>${esc(p.mobility||'-')}</dd>
         <dt>장기요양</dt><dd>${esc(p.ltc_grade||'-')}</dd>
         <dt>유입 경로</dt><dd>${esc(p.source||'-')}</dd>
@@ -1053,6 +1096,19 @@ function showPatient(id){
         <div class="tl-body">담당 ${esc(staffN(v.doctor_id))} · ${esc(feeN(v.fee_code))}${(v.act_codes||[]).length?' + '+(v.act_codes||[]).map(a=>esc(feeN(a))).join(', '):''}
         ${v.note?`<br>${esc(v.note)}`:''}</div></div>`).join('')}</div>` : '<div class="empty">아직 방문 이력이 없습니다</div>'}</div>
 
+    <div class="card" style="box-shadow:none">
+      <div class="between" style="margin-bottom:4px"><h4 style="font-size:13px">공공데이터 조회</h4>
+        <span class="sm muted">방문 전 안전 확인</span></div>
+      <div class="sub" style="margin-bottom:10px">약물 안전성·방문지 좌표·인근 응급실을 공공 API에서 불러옵니다</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn sm" onclick="checkDrugs('${p.id}')">💊 복용약 안전성 점검</button>
+        <button class="btn sm" onclick="findER('${p.id}')">🚑 인근 응급실</button>
+        ${(p.lat && p.lon) ? `<a class="btn sm" target="_blank" rel="noopener"
+           href="https://map.kakao.com/link/to/${encodeURIComponent(p.name+' 방문지')},${p.lat},${p.lon}">🗺 길찾기</a>` : ''}
+      </div>
+      <div id="gov-out"></div>
+    </div>
+
     <div class="card" style="box-shadow:none"><h4 style="font-size:13px;margin-bottom:10px">동의 관리</h4>
       <div class="checklist">
         <label class="checkitem"><input type="checkbox" ${p.consent_care?'checked':''} ${canEdit()?'':'disabled'}
@@ -1064,6 +1120,59 @@ function showPatient(id){
       </div></div>
   </div>`);
 }
+async function checkDrugs(pid){
+  const out = document.getElementById('gov-out'); if (!out) return;
+  const p = byId('patients', pid);
+  if (!(p.meds||[]).length){ out.innerHTML = `<div class="notice info">등록된 복용약이 없습니다. 먼저 환자 정보에 복용약을 입력해 주세요.</div>`; return; }
+  if (!govReady('data_go_kr')){ out.innerHTML = govNeedKey('data_go_kr','공공데이터포털'); return; }
+  out.innerHTML = `<div class="sm muted">조회 중… (${(p.meds||[]).join(', ')})</div>`;
+  const { data, error } = await sb.rpc('patient_drug_alerts', { p_patient: pid });
+  if (error){ out.innerHTML = `<div class="notice">조회 실패: ${esc(error.message)}</div>`; return; }
+  if (!data.ok){
+    out.innerHTML = data.error === '인증키 미설정' ? govNeedKey('data_go_kr','공공데이터포털')
+      : `<div class="notice">${esc(data.error||'조회 실패')}</div>`;
+    return;
+  }
+  const alerts = data.alerts || [];
+  out.innerHTML = alerts.length
+    ? `<div class="notice"><strong>⚠ 노인주의 성분 ${alerts.length}건</strong>
+        <div style="margin-top:7px">${alerts.map(a=>`• <strong>${esc(a.drug)}</strong> — ${esc(a.detail)}`).join('<br>')}</div>
+        <div style="margin-top:8px;font-weight:500">시술 전 주치의 소견을 확인하고, 필요하면 환자 정보의 위험 요인에 추가하세요.</div></div>`
+    : `<div class="notice ok">✓ 등록된 복용약 ${(data.checked||[]).length}종에서 노인주의 항목이 확인되지 않았습니다.
+        <div style="margin-top:4px;font-weight:500">다만 이 결과가 안전을 보장하지는 않습니다. 최종 판단은 임상적으로 하세요.</div></div>`;
+}
+
+async function findER(pid){
+  const out = document.getElementById('gov-out'); if (!out) return;
+  const p = byId('patients', pid);
+  if (!govReady('data_go_kr')){ out.innerHTML = govNeedKey('data_go_kr','공공데이터포털'); return; }
+  if (!p.lat || !p.lon){
+    out.innerHTML = `<div class="notice info">방문지 좌표가 없습니다. <strong>정보 수정 → 주소 검색</strong>으로 주소를 다시 지정하면 좌표가 저장됩니다.</div>`;
+    return;
+  }
+  out.innerHTML = `<div class="sm muted">인근 응급의료기관 조회 중…</div>`;
+  const res = await gov('er', { WGS84_LON: String(p.lon), WGS84_LAT: String(p.lat) });
+  if (!res.ok){ out.innerHTML = govError(res); return; }
+  const items = govItems(res);
+  out.innerHTML = items.length
+    ? `<div class="tbl-wrap"><table><thead><tr><th>기관</th><th>주소</th><th>응급실 전화</th></tr></thead>
+       <tbody>${items.slice(0,5).map(i=>`<tr><td><strong>${esc(i.dutyName||'-')}</strong></td>
+         <td class="sm muted">${esc(i.dutyAddr||'-')}</td><td class="num" style="text-align:left">${esc(i.dutyTel3||i.dutyTel1||'-')}</td></tr>`).join('')}</tbody></table></div>
+       <div class="sm muted" style="margin-top:6px">응급상황 시 119와 함께 활용하세요.</div>`
+    : `<div class="notice info">인근 응급의료기관을 찾지 못했습니다.</div>`;
+}
+
+function govNeedKey(name, where){
+  return `<div class="notice">🔑 <strong>${where} 인증키가 아직 없습니다.</strong>
+    <div style="margin-top:5px;font-weight:500">설정 · 연동 화면에서 키를 넣으면 이 기능이 바로 켜집니다.</div>
+    <button class="btn sm" style="margin-top:8px" onclick="closeDrawer();go('settings')">설정으로 이동</button></div>`;
+}
+function govError(res){
+  if (res.error === '인증키 미설정') return govNeedKey(res.need_key, res.need_key === 'juso' ? '도로명주소' : '공공데이터포털');
+  return `<div class="notice">조회 실패: ${esc(res.error||'알 수 없는 오류')}
+    ${res.body?`<div class="sm" style="margin-top:6px;opacity:.8">${esc(String(res.body).slice(0,200))}</div>`:''}</div>`;
+}
+
 function formPatient(id){
   const p = id ? byId('patients', id) : {};
   const arr = a => (a||[]).join(', ');
@@ -1077,9 +1186,26 @@ function formPatient(id){
       <div class="field"><label>관계</label><input id="pf-gr" value="${esc(p.guardian_rel||'')}" placeholder="자녀 / 배우자"></div></div>
     <div class="field"><label>보호자 연락처</label><input id="pf-gt" value="${esc(p.guardian_tel||'')}"></div>
     <div class="row"><div class="field"><label>지역</label><input id="pf-region" value="${esc(p.region||'')}" placeholder="성동구"></div>
-      <div class="field"><label>거주 형태</label><select id="pf-place">${['재가','시설','요양병원'].map(x=>`<option ${p.place===x?'selected':''}>${x}</option>`).join('')}</select></div></div>
-    <div class="field"><label>방문 주소</label><input id="pf-addr" value="${esc(p.address||'')}" placeholder="도로명주소 · 엘리베이터/주차 메모 포함">
-      <div class="hint">실서비스에서는 행정안전부 도로명주소 API로 정규화합니다.</div></div>
+      <div class="field"><label>거주 형태</label><select id="pf-place" onchange="document.getElementById('fac-wrap').style.display = this.value==='재가' ? 'none' : 'flex'">${['재가','시설','요양병원'].map(x=>`<option ${p.place===x?'selected':''}>${x}</option>`).join('')}</select></div></div>
+    <div class="field"><label>방문 주소</label>
+      <div style="display:flex;gap:6px">
+        <input id="pf-addr" value="${esc(p.address||'')}" placeholder="예: 성동구 행당동 또는 왕십리로 100" style="flex:1">
+        <button class="btn" type="button" onclick="searchAddr()">주소 검색</button>
+      </div>
+      <input type="hidden" id="pf-lat" value="${p.lat ?? ''}">
+      <input type="hidden" id="pf-lon" value="${p.lon ?? ''}">
+      <input type="hidden" id="pf-zip" value="${esc(p.zipcode||'')}">
+      <div class="hint">${(p.lat&&p.lon)?`좌표 저장됨 (${(+p.lat).toFixed(5)}, ${(+p.lon).toFixed(5)}) — 길찾기·인근 응급실 조회에 사용됩니다`:'검색으로 선택하면 좌표가 함께 저장되어 길찾기·응급실 조회가 켜집니다'}</div>
+      <div id="addr-out"></div>
+      <input id="pf-addr-memo" value="${esc(p.memo||'')}" placeholder="엘리베이터·주차·현관 비밀번호 등 방문 메모" style="margin-top:6px"></div>
+    <div class="field" id="fac-wrap" style="${(p.place&&p.place!=='재가')?'':'display:none'}">
+      <label>시설명</label>
+      <div style="display:flex;gap:6px">
+        <input id="pf-fac" value="${esc(p.facility_name||'')}" placeholder="예: 서울OO요양원" style="flex:1">
+        <button class="btn" type="button" onclick="searchFacility()">시설 검색</button>
+      </div>
+      <input type="hidden" id="pf-factel" value="${esc(p.facility_tel||'')}">
+      <div id="fac-out"></div></div>
     <div class="row"><div class="field"><label>장기요양 등급</label><select id="pf-ltc">
         ${['','장기요양 1등급','장기요양 2등급','장기요양 3등급','장기요양 4등급','장기요양 5등급','인지지원등급','해당없음','모름']
           .map(x=>`<option ${(p.ltc_grade||'')===x?'selected':''}>${x||'선택'}</option>`).join('')}</select></div>
@@ -1100,6 +1226,61 @@ function formPatient(id){
       ${id && me.app_role==='admin' ? `<div class="spacer"></div><button class="btn danger" onclick="if(confirm('이 환자와 모든 방문기록을 삭제할까요?')){removeRow('patients','${id}');closeDrawer()}">삭제</button>`:''}
     </div>`);
 }
+async function searchAddr(){
+  const out = document.getElementById('addr-out'); const q = val('pf-addr');
+  if (!q) return toast('검색할 주소를 입력하세요');
+  if (!govReady('juso')){ out.innerHTML = govNeedKey('juso','도로명주소'); return; }
+  out.innerHTML = '<div class="sm muted" style="margin-top:6px">검색 중…</div>';
+  const res = await gov('juso', { keyword: q });
+  if (!res.ok){ out.innerHTML = govError(res); return; }
+  const list = res.data?.results?.juso || [];
+  if (!list.length){ out.innerHTML = '<div class="notice info" style="margin-top:6px">검색 결과가 없습니다. 도로명이나 동 이름으로 다시 시도해 보세요.</div>'; return; }
+  out.innerHTML = `<div style="margin-top:6px;border:1px solid var(--border);border-radius:10px;max-height:220px;overflow:auto">
+    ${list.map((j,i)=>`<button type="button" style="display:block;width:100%;text-align:left;padding:9px 11px;border-bottom:1px solid var(--grid)"
+      onclick="pickAddr(${i})"><strong style="font-size:13px">${esc(j.roadAddr)}</strong>
+      <span class="sm muted" style="display:block">${esc(j.jibunAddr||'')} · ${esc(j.zipNo||'')}</span></button>`).join('')}</div>`;
+  window.__juso = list;
+}
+async function pickAddr(i){
+  const j = (window.__juso||[])[i]; if (!j) return;
+  document.getElementById('pf-addr').value = j.roadAddr;
+  document.getElementById('pf-zip').value = j.zipNo || '';
+  const out = document.getElementById('addr-out');
+  out.innerHTML = '<div class="sm muted" style="margin-top:6px">좌표 확인 중…</div>';
+  // 좌표는 도로명주소 좌표 API가 별도 승인 항목이라, 실패해도 주소는 저장됩니다
+  const c = await gov('juso_coord', { admCd:j.admCd, rnMgtSn:j.rnMgtSn, udrtYn:j.udrtYn, buldMnnm:j.buldMnnm, buldSlno:j.buldSlno });
+  const g = c?.ok ? (c.data?.results?.juso||[])[0] : null;
+  if (g && g.entX && g.entY){
+    document.getElementById('pf-lon').value = g.entX;
+    document.getElementById('pf-lat').value = g.entY;
+    out.innerHTML = `<div class="notice ok" style="margin-top:6px">✓ 주소와 좌표를 가져왔습니다</div>`;
+  } else {
+    out.innerHTML = `<div class="notice info" style="margin-top:6px">주소는 저장됩니다. 좌표는 도로명주소 <strong>좌표제공 API</strong>를 추가 신청하면 켜집니다.</div>`;
+  }
+}
+async function searchFacility(){
+  const out = document.getElementById('fac-out'); const q = val('pf-fac');
+  if (!q) return toast('시설명을 입력하세요');
+  if (!govReady('data_go_kr')){ out.innerHTML = govNeedKey('data_go_kr','공공데이터포털'); return; }
+  out.innerHTML = '<div class="sm muted" style="margin-top:6px">검색 중…</div>';
+  const res = await gov('ltc', { adminNm: q });
+  if (!res.ok){ out.innerHTML = govError(res); return; }
+  const list = govItems(res);
+  if (!list.length){ out.innerHTML = '<div class="notice info" style="margin-top:6px">검색 결과가 없습니다.</div>'; return; }
+  window.__ltc = list;
+  out.innerHTML = `<div style="margin-top:6px;border:1px solid var(--border);border-radius:10px;max-height:200px;overflow:auto">
+    ${list.slice(0,10).map((f,i)=>`<button type="button" style="display:block;width:100%;text-align:left;padding:9px 11px;border-bottom:1px solid var(--grid)"
+      onclick="pickFacility(${i})"><strong style="font-size:13px">${esc(f.adminNm||f.longTermAdminSym||'-')}</strong>
+      <span class="sm muted" style="display:block">${esc(f.adres||f.address||'')} ${esc(f.telno||'')}</span></button>`).join('')}</div>`;
+}
+function pickFacility(i){
+  const f = (window.__ltc||[])[i]; if (!f) return;
+  document.getElementById('pf-fac').value = f.adminNm || '';
+  document.getElementById('pf-factel').value = f.telno || '';
+  if (f.adres && !val('pf-addr')) document.getElementById('pf-addr').value = f.adres;
+  document.getElementById('fac-out').innerHTML = '<div class="notice ok" style="margin-top:6px">✓ 시설 정보를 반영했습니다</div>';
+}
+
 async function savePatient(id){
   const name = val('pf-name'); if (!name) return toast('성함은 필수입니다');
   const split = s => s ? s.split(',').map(x=>x.trim()).filter(Boolean) : [];
@@ -1110,7 +1291,13 @@ async function savePatient(id){
     mobility: val('pf-mob') === '선택' ? null : val('pf-mob'),
     doctor_id: val('pf-doc') || null, status: val('pf-status'),
     diseases: split(val('pf-dz')), meds: split(val('pf-meds')), risks: split(val('pf-risk')),
-    ohat: val('pf-ohat') === '' ? null : Math.max(0, Math.min(16, +val('pf-ohat'))) };
+    ohat: val('pf-ohat') === '' ? null : Math.max(0, Math.min(16, +val('pf-ohat'))),
+    lat: val('pf-lat') ? +val('pf-lat') : null,
+    lon: val('pf-lon') ? +val('pf-lon') : null,
+    zipcode: val('pf-zip') || null,
+    facility_name: val('pf-fac') || null,
+    facility_tel: val('pf-factel') || null,
+    memo: val('pf-addr-memo') || null };
   if (id) row.id = id;
   else if (!LIVE) row.code = 'P' + String(S.patients.length + 1).padStart(3,'0');
   const saved = await save('patients', row);
@@ -1625,17 +1812,38 @@ V.settings = () => {
       ${!LIVE?`<div class="notice" style="margin-top:12px">현재는 데모 모드입니다. 치과 PC와 현장 휴대폰이 <strong>같은 데이터</strong>를 보게 하려면 index.html 상단의 <code>CONFIG</code> 두 줄에 Supabase 주소와 키를 넣어 주세요. (README 참고)</div>`:''}
     </div>
     <div class="grid g-2">
-      <div class="card"><h3>공공데이터 · 외부 연동</h3><div class="sub">실서비스 전환 시 연결할 지점</div>
+      <div class="card"><h3>공공데이터 연동</h3><div class="sub">인증키를 넣으면 환자 화면에서 바로 조회됩니다</div>
+        ${me.app_role==='admin'?`
+        <div class="field"><label>공공데이터포털 인증키 ${govReady('data_go_kr')?'<span class="tag good">설정됨</span>':'<span class="tag crit">미설정</span>'}</label>
+          <div style="display:flex;gap:6px"><input id="k-dgk" type="password" placeholder="일반 인증키(Decoding)를 붙여넣으세요" style="flex:1">
+            <button class="btn primary" onclick="saveGovKey('data_go_kr', val('k-dgk'))">저장</button></div>
+          <div class="hint">data.go.kr 회원가입 → 아래 API들 <strong>활용신청</strong> → 마이페이지의 <strong>일반 인증키(Decoding)</strong></div></div>
+        <div class="field"><label>도로명주소 승인키 ${govReady('juso')?'<span class="tag good">설정됨</span>':'<span class="tag crit">미설정</span>'}</label>
+          <div style="display:flex;gap:6px"><input id="k-juso" type="password" placeholder="juso.go.kr 승인키" style="flex:1">
+            <button class="btn primary" onclick="saveGovKey('juso', val('k-juso'))">저장</button></div>
+          <div class="hint">business.juso.go.kr → 도로명주소 검색 API 신청 (좌표가 필요하면 좌표제공 API도 함께)</div></div>
+        <div class="notice info">저장된 키는 <strong>브라우저로 내려오지 않습니다.</strong> 데이터베이스 안에만 있고, 조회는 서버 쪽 함수가 대신 수행합니다.</div>
+        <hr class="sep">`:'<div class="notice info">인증키 설정은 admin 권한에서만 가능합니다.</div><hr class="sep">'}
         <div class="tbl-wrap"><table><thead><tr><th>연동 대상</th><th>상태</th><th>용도</th></tr></thead><tbody>
-          ${[['보건복지부 통합돌봄 대상자 조회','설계중','시·군·구 통합지원회의 의뢰 대상자 연계 (기관 인증 필요)'],
-             ['국민건강보험공단 장기요양 등급 조회','설계중','등급·인정기간 확인. 본인 동의 기반 조회'],
-             ['심평원 요양기관 업무포털 (청구)','미연동','수가 확정 고시 후 EDI 청구 연계'],
-             ['행정안전부 도로명주소 API','설계중','방문지 주소 정규화 및 좌표 변환'],
-             ['공공데이터포털 요양기관 정보','설계중','협력 요양시설 기본정보 자동 채움'],
-             ['알림톡/SMS 발송','설계중','보호자 방문 전일 안내 및 사후관리 발송']]
+          ${[['식약처 의약품 DUR — 노인주의','data_go_kr','복용약의 65세 이상 주의 성분을 환자 카드에서 자동 확인'],
+             ['식약처 의약품 DUR — 병용금기','data_go_kr','함께 복용하면 안 되는 약 확인'],
+             ['식약처 e약은요 (의약품 개요)','data_go_kr','약 효능·주의사항을 쉬운 말로'],
+             ['행정안전부 도로명주소','juso','방문지 주소 정규화 · 좌표 · 길찾기'],
+             ['건보공단 장기요양기관 검색','data_go_kr','시설 환자 등록 시 시설명·주소·연락처 자동 입력'],
+             ['중앙응급의료센터 응급기관 위치','data_go_kr','방문지 인근 응급실을 환자 카드에 표시']]
             .map(r=>`<tr><td><strong>${r[0]}</strong></td>
-              <td><span class="tag ${r[1]==='설계중'?'warn':''}">${r[1]}</span></td>
-              <td class="sm muted">${r[2]}</td></tr>`).join('')}</tbody></table></div></div>
+              <td>${govReady(r[1])?'<span class="tag good">연동됨</span>':'<span class="tag warn">키 필요</span>'}</td>
+              <td class="sm muted">${r[2]}</td></tr>`).join('')}
+          ${[['보건복지부 통합돌봄 대상자 연계','기관 신청 필요','시·군·구 통합지원회의 의뢰 경로. 공공마이데이터 이용기관 신청 대상'],
+             ['건보공단 개인 장기요양 등급 조회','기관 신청 필요','오픈 API 없음. 본인 동의 기반 공공마이데이터로만 가능'],
+             ['건강정보 고속도로 (진료·투약 이력)','기관 신청 필요','보건복지부·보건의료정보원. 참여 의료기관 신청 후 이용'],
+             ['심평원 EDI 청구','수가 고시 후','방문치과 수가 확정 고시 이후 연계']]
+            .map(r=>`<tr><td><strong>${r[0]}</strong></td><td><span class="tag">${r[1]}</span></td>
+              <td class="sm muted">${r[2]}</td></tr>`).join('')}</tbody></table></div>
+        <div class="notice" style="margin-top:12px">⚠ <strong>개인 데이터는 오픈 API로 제공되지 않습니다.</strong>
+          환자 개인의 장기요양 등급·건강보험 자격·진료 이력은 공공데이터포털에 없습니다.
+          본인 동의를 받아 <strong>공공마이데이터(정부24)</strong> 또는 <strong>건강정보 고속도로</strong> 이용기관으로
+          신청해야 가능하며, 둘 다 기관 자격 심사를 거칩니다.</div></div>
       <div class="card"><h3>개인정보 처리 원칙</h3><div class="sub">의료 데이터를 다루는 플랫폼의 최소 요건</div>
         <div class="checklist">${['주민등록번호는 수집하지 않음 (환자코드로 식별)','로그인하지 않으면 환자 정보 접근 불가 (RLS)',
           '권한 3단계 분리 — admin / staff / viewer','콘텐츠 활용 동의는 진료 동의와 분리 수집',
@@ -1888,6 +2096,7 @@ V['f-guide'] = () => `
       await initAuth();
       if (session){
         await loadAll(); lastSync = new Date();
+        await govKeyStatus();
         subscribeRealtime(); startAutoRefresh(); flushQueue();
       } else {
         Object.assign(S, demoSeed());   // 비로그인 상태에서도 보호자 프론트는 동작
