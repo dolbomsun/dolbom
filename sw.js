@@ -2,7 +2,7 @@
    · 앱 화면은 캐시 우선으로 즉시 실행
    · Supabase API는 네트워크 우선, 실패 시 마지막 응답 사용
    버전을 올리면 사용자 기기에서 자동 갱신됩니다. */
-const V = 'dolbom-v1';
+const V = 'dolbom-v2';
 const SHELL = [
   './',
   './index.html',
